@@ -1,5 +1,6 @@
 package com.timuzkas.cultivar;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
@@ -8,10 +9,15 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class CropGrowthTask extends BukkitRunnable {
     private final CropManager cropManager;
     private final Plugin plugin;
+    private SoilManager soilManager;
 
     public CropGrowthTask(CropManager cropManager, Plugin plugin) {
         this.cropManager = cropManager;
         this.plugin = plugin;
+    }
+
+    public void setSoilManager(SoilManager soilManager) {
+        this.soilManager = soilManager;
     }
 
     @Override
@@ -20,13 +26,34 @@ public class CropGrowthTask extends BukkitRunnable {
         for (CropRecord crop : cropManager.getAll()) {
             if (plugin.getConfig().getStringList("cultivar.disabled-worlds").contains(crop.location.getWorld().getName())) continue;
 
-            // Skip dead plants (wither roses)
             if (crop.deathReason != null) continue;
 
-            // Check dying
+            World world = crop.location.getWorld();
+            boolean isRaining = world.hasStorm() && world.getHighestBlockYAt(crop.location) <= crop.location.getBlockY();
+            boolean isThundering = world.isThundering() && isRaining;
+
+            if (isRaining) {
+                crop.lastRainedAt = now;
+            }
+
+            if (isThundering && crop.type == CropType.CANNABIS && crop.stage <= 1) {
+                crop.stress += 1;
+                crop.flags.add(CropFlag.STUNTED);
+                crop.dirty = true;
+                world.spawnParticle(org.bukkit.Particle.SMOKE_NORMAL, crop.location.clone().add(0.5, 1, 0.5), 3, 0.2, 0.2, 0.2, 0);
+            }
+
             if (crop.flags.contains(CropFlag.DYING)) {
+                long waterExpiry = plugin.getConfig().getLong("cultivar." + crop.type.name().toLowerCase() + ".water-expiry-minutes", 45) * 60000;
+                boolean unwatered = now - crop.lastWatered > waterExpiry;
+                boolean drought = crop.lastRainedAt > 0 && (now - crop.lastRainedAt) > (waterExpiry * 2) && unwatered;
+                
+                if (drought && !crop.flags.contains(CropFlag.WILTING)) {
+                    crop.flags.add(CropFlag.WILTING);
+                    crop.dirty = true;
+                }
+
                 if (now - crop.lastWatered > plugin.getConfig().getLong("cultivar.cannabis.dying-window-minutes", 20) * 60000) {
-                    // Die
                     crop.deathReason = "Died from stress";
                     crop.location.getBlock().setType(org.bukkit.Material.WITHER_ROSE);
                     try {
@@ -38,30 +65,30 @@ public class CropGrowthTask extends BukkitRunnable {
                 }
             }
 
-            // Stage advance conditions
             boolean canAdvance = checkAdvanceConditions(crop, now);
             if (canAdvance) {
                 advanceStage(crop);
             } else {
-                // Log if ready but failing conditions
-                long stageTime = crop.getStageTimeMs(plugin.getConfig());
+                int enrichment = getSoilEnrichment(crop);
+                long stageTime = crop.getStageTimeMs(plugin.getConfig(), enrichment);
                 long timeToAdvance = (crop.stageAdvancedAt + stageTime) - now;
                 if (timeToAdvance <= 0) {
                     String reason = "";
-                    // Check water
                     long waterExpiry = plugin.getConfig().getLong("cultivar." + crop.type.name().toLowerCase() + ".water-expiry-minutes", 45) * 60000;
                     boolean watered = now - crop.lastWatered <= waterExpiry;
-                    World world = crop.location.getWorld();
                     boolean rained = world.hasStorm() && world.getHighestBlockYAt(crop.location) <= crop.location.getBlockY();
                     if (!watered && !rained) reason += "water ";
-                    // Check light
                     int light = crop.location.getBlock().getLightLevel();
                     int minLight = switch (crop.type) {
                         case CANNABIS -> 10;
                         case TOBACCO -> crop.flags.contains(CropFlag.LOW_LIGHT) ? 0 : 12;
                         case TEA -> 7;
+                        case MUSHROOM -> 0;
                     };
-                    int maxLight = crop.type == CropType.TEA ? 13 : 15;
+                    int maxLight = switch (crop.type) {
+                        case TEA -> 13;
+                        default -> 15;
+                    };
                     if (light < minLight || light > maxLight) reason += "light ";
                     if (crop.flags.contains(CropFlag.DYING)) reason += "dying ";
                     if (!reason.isEmpty()) {
@@ -70,53 +97,58 @@ public class CropGrowthTask extends BukkitRunnable {
                 }
             }
 
-            // Stress evaluation
             evaluateStress(crop);
 
-            // Set flags
             setAttentionFlags(crop);
         }
     }
 
     private boolean checkAdvanceConditions(CropRecord crop, long now) {
-        // Watered
-        long waterExpiry = plugin.getConfig().getLong("cultivar." + crop.type.name().toLowerCase() + ".water-expiry-minutes", 45) * 60000;
-        boolean watered = now - crop.lastWatered <= waterExpiry;
-        // Or rained
-        World world = crop.location.getWorld();
-        boolean rained = world.hasStorm() && world.getHighestBlockYAt(crop.location) <= crop.location.getBlockY();
+        if (crop.type == CropType.MUSHROOM) {
+            int light = crop.location.getBlock().getLightLevel();
+            if (light > 7) return false;
+            
+            Material blockBelow = crop.location.clone().subtract(0, 1, 0).getBlock().getType();
+            if (blockBelow != Material.MYCELIUM && blockBelow != Material.PODZOL) return false;
+        } else {
+            long waterExpiry = plugin.getConfig().getLong("cultivar." + crop.type.name().toLowerCase() + ".water-expiry-minutes", 45) * 60000;
+            boolean watered = now - crop.lastWatered <= waterExpiry;
+            World world = crop.location.getWorld();
+            boolean rained = world.hasStorm() && world.getHighestBlockYAt(crop.location) <= crop.location.getBlockY();
 
-        if (!watered && !rained) return false;
+            if (!watered && !rained) return false;
 
-        // Light
-        int light = crop.location.getBlock().getLightLevel();
-        int minLight = switch (crop.type) {
-            case CANNABIS -> 10;
-            case TOBACCO -> crop.flags.contains(CropFlag.LOW_LIGHT) ? 0 : 12; // Allow low if flagged
-            case TEA -> 7;
-        };
-        int maxLight = crop.type == CropType.TEA ? 13 : 15;
-        if (light < minLight || light > maxLight) {
-            if (crop.type == CropType.TOBACCO && light < 12) {
-                crop.flags.add(CropFlag.LOW_LIGHT);
+            int light = crop.location.getBlock().getLightLevel();
+            int minLight = switch (crop.type) {
+                case CANNABIS -> 10;
+                case TOBACCO -> crop.flags.contains(CropFlag.LOW_LIGHT) ? 0 : 12;
+                case TEA -> 7;
+                case MUSHROOM -> 0;
+            };
+            int maxLight = switch (crop.type) {
+                case TEA -> 13;
+                default -> 15;
+            };
+            if (light < minLight || light > maxLight) {
+                if (crop.type == CropType.TOBACCO && light < 12) {
+                    crop.flags.add(CropFlag.LOW_LIGHT);
+                }
+                return false;
             }
-            return false;
         }
 
-        // Not dying
         if (crop.flags.contains(CropFlag.DYING)) return false;
 
-        // Time
-        long stageTime = crop.getStageTimeMs(plugin.getConfig());
+        int enrichment = getSoilEnrichment(crop);
+        long stageTime = crop.getStageTimeMs(plugin.getConfig(), enrichment);
 
         if (now - crop.stageAdvancedAt >= stageTime) {
-            // Overgrow check
             if (crop.stage >= crop.type.getMaxStage()) {
                 crop.flags.add(CropFlag.OVERGROWN);
                 crop.stress++;
-                crop.stageAdvancedAt = now; // Restart timer for next overgrow "tick"
+                crop.stageAdvancedAt = now;
                 crop.dirty = true;
-                return false; // Don't "advance" stage number, just apply overgrow penalties
+                return false;
             }
             return true;
         }
@@ -200,5 +232,11 @@ public class CropGrowthTask extends BukkitRunnable {
 
     private Material getVisualBlock(CropRecord crop) {
         return crop.type.getVisualBlock(crop.stage);
+    }
+
+    private int getSoilEnrichment(CropRecord crop) {
+        if (soilManager == null) return 0;
+        Location farmlandLoc = crop.location.clone().subtract(0, 1, 0);
+        return soilManager.getEnrichment(farmlandLoc);
     }
 }

@@ -3,7 +3,11 @@ package com.timuzkas.cultivar;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -55,12 +59,26 @@ public class Database {
               stress INTEGER DEFAULT 0,
               flags TEXT DEFAULT '',
               heat_bonus INTEGER DEFAULT 0,
-              water_source_bonus INTEGER DEFAULT 0
+              water_source_bonus INTEGER DEFAULT 0,
+              strain_id TEXT,
+              strain_name TEXT,
+              cold_biome INTEGER DEFAULT 0
             );
             """;
 
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
+            addColumnIfNotExists(stmt, "crops", "strain_id", "TEXT");
+            addColumnIfNotExists(stmt, "crops", "strain_name", "TEXT");
+            addColumnIfNotExists(stmt, "crops", "cold_biome", "INTEGER DEFAULT 0");
+        }
+    }
+
+    private void addColumnIfNotExists(Statement stmt, String table, String column, String definition) {
+        try {
+            stmt.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
+        } catch (SQLException e) {
+            // Column already exists, ignore
         }
     }
 
@@ -122,6 +140,9 @@ public class Database {
                 record.heatBonus = rs.getInt("heat_bonus") == 1;
                 record.waterSourceBonus = rs.getInt("water_source_bonus") == 1;
                 record.deathReason = rs.getString("death_reason");
+                record.strainId = rs.getString("strain_id");
+                record.strainName = rs.getString("strain_name");
+                record.coldBiome = rs.getInt("cold_biome") == 1;
 
                 records.add(record);
             }
@@ -135,8 +156,9 @@ public class Database {
             INSERT OR REPLACE INTO crops (
             id, world, x, y, z, crop_type, stage, owner_uuid,
             planted_at, stage_advanced_at, last_watered, last_pruned,
-            last_stripped, last_misted, stress, flags, heat_bonus, water_source_bonus, death_reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            last_stripped, last_misted, stress, flags, heat_bonus, water_source_bonus, death_reason,
+            strain_id, strain_name, cold_biome
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -172,6 +194,9 @@ public class Database {
             stmt.setInt(17, record.heatBonus ? 1 : 0);
             stmt.setInt(18, record.waterSourceBonus ? 1 : 0);
             stmt.setString(19, record.deathReason);
+            stmt.setString(20, record.strainId);
+            stmt.setString(21, record.strainName);
+            stmt.setInt(22, record.coldBiome ? 1 : 0);
 
             stmt.executeUpdate();
         }
@@ -184,6 +209,114 @@ public class Database {
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, id);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void createSoilTable() throws SQLException {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS soil_enrichment (
+              world TEXT NOT NULL,
+              x INTEGER NOT NULL,
+              y INTEGER NOT NULL,
+              z INTEGER NOT NULL,
+              level INTEGER DEFAULT 0,
+              PRIMARY KEY (world, x, y, z)
+            );
+            """;
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    public void saveSoilEnrichment(Location location, int level) throws SQLException {
+        String sql = """
+            INSERT OR REPLACE INTO soil_enrichment (world, x, y, z, level)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, location.getWorld().getName());
+            stmt.setInt(2, location.getBlockX());
+            stmt.setInt(3, location.getBlockY());
+            stmt.setInt(4, location.getBlockZ());
+            stmt.setInt(5, level);
+            stmt.executeUpdate();
+        }
+    }
+
+    public Map<Location, Integer> loadAllSoilEnrichment() throws SQLException {
+        Map<Location, Integer> data = new HashMap<>();
+        String sql = "SELECT * FROM soil_enrichment";
+        try (
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery()
+        ) {
+            while (rs.next()) {
+                String worldName = rs.getString("world");
+                org.bukkit.World world = org.bukkit.Bukkit.getWorld(worldName);
+                if (world == null) continue;
+                int x = rs.getInt("x");
+                int y = rs.getInt("y");
+                int z = rs.getInt("z");
+                int level = rs.getInt("level");
+                Location loc = new Location(world, x, y, z);
+                data.put(loc, level);
+            }
+        }
+        return data;
+    }
+
+    public void deleteSoilEnrichment(Location location) throws SQLException {
+        String sql = "DELETE FROM soil_enrichment WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, location.getWorld().getName());
+            stmt.setInt(2, location.getBlockX());
+            stmt.setInt(3, location.getBlockY());
+            stmt.setInt(4, location.getBlockZ());
+            stmt.executeUpdate();
+        }
+    }
+
+    public void createPlayerStrainsTable() throws SQLException {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS player_strains (
+              player_uuid TEXT NOT NULL,
+              strain_id TEXT NOT NULL,
+              PRIMARY KEY (player_uuid, strain_id)
+            );
+            """;
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    public Set<String> loadPlayerStrains(UUID playerUuid) throws SQLException {
+        Set<String> strains = new HashSet<>();
+        String sql = "SELECT strain_id FROM player_strains WHERE player_uuid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    strains.add(rs.getString("strain_id"));
+                }
+            }
+        }
+        return strains;
+    }
+
+    public void savePlayerStrain(UUID playerUuid, String strainId) throws SQLException {
+        String sql = "INSERT OR IGNORE INTO player_strains (player_uuid, strain_id) VALUES (?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            stmt.setString(2, strainId);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void clearPlayerStrains(UUID playerUuid) throws SQLException {
+        String sql = "DELETE FROM player_strains WHERE player_uuid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
             stmt.executeUpdate();
         }
     }

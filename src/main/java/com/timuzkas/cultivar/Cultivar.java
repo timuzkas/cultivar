@@ -10,6 +10,8 @@ public class Cultivar extends JavaPlugin {
     private PipeManager pipeManager;
     private TeaBrewManager teaBrewManager;
     private RecipeRegistry recipeRegistry;
+    private SoilManager soilManager;
+    private PlayerStrainManager playerStrainManager;
 
     @Override
     public void onEnable() {
@@ -34,6 +36,23 @@ public class Cultivar extends JavaPlugin {
             getLogger().severe("Failed to load crops: " + e.getMessage());
         }
 
+        try {
+            database.createSoilTable();
+        } catch (Exception e) {
+            getLogger().severe("Failed to create soil table: " + e.getMessage());
+        }
+
+        try {
+            database.createPlayerStrainsTable();
+        } catch (Exception e) {
+            getLogger().severe("Failed to create player strains table: " + e.getMessage());
+        }
+
+        soilManager = new SoilManager(database);
+        soilManager.loadFromDatabase();
+
+        playerStrainManager = new PlayerStrainManager(database, this);
+
         animator = new ActionBarAnimator(this);
         pipeManager = new PipeManager();
         teaBrewManager = new TeaBrewManager();
@@ -42,16 +61,16 @@ public class Cultivar extends JavaPlugin {
         // Register listeners
         getServer()
             .getPluginManager()
-            .registerEvents(new CropPlaceListener(cropManager, animator), this);
+            .registerEvents(new CropPlaceListener(cropManager, animator, this), this);
         getServer()
             .getPluginManager()
             .registerEvents(new CropBreakListener(cropManager), this);
+        CropInteractListener cropInteractListener = new CropInteractListener(cropManager, animator, this);
+        cropInteractListener.setSoilManager(soilManager);
+        cropInteractListener.setStrainManager(playerStrainManager);
         getServer()
             .getPluginManager()
-            .registerEvents(
-                new CropInteractListener(cropManager, animator, this),
-                this
-            );
+            .registerEvents(cropInteractListener, this);
         getServer()
             .getPluginManager()
             .registerEvents(new FurnaceListener(), this);
@@ -81,12 +100,15 @@ public class Cultivar extends JavaPlugin {
         recipeRegistry.register();
 
         // Register commands
-        getCommand("cultivar").setExecutor(
-            new CultivarCommand(cropManager, animator, this)
-        );
+        CultivarCommand command = new CultivarCommand(cropManager, animator, this);
+        command.setStrainManager(playerStrainManager);
+        command.setSoilManager(soilManager);
+        getCommand("cultivar").setExecutor(command);
 
         // Start tasks
-        new CropGrowthTask(cropManager, this).runTaskTimer(this, 0, 1200); // 60s
+        CropGrowthTask growthTask = new CropGrowthTask(cropManager, this);
+        growthTask.setSoilManager(soilManager);
+        growthTask.runTaskTimer(this, 0, 1200); // 60s
         new CropParticleTask(cropManager, this).runTaskTimer(this, 0, 600); // 30s
         new ProximityNotifyTask(cropManager, animator, this).runTaskTimer(
             this,

@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -119,6 +120,63 @@ public class TeaBrewListener implements Listener {
                 event.setCancelled(true);
             }
         }
+
+    }
+
+    @EventHandler
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        if (!(event.getRightClicked() instanceof Player targetPlayer)) return;
+        
+        Player player = event.getPlayer();
+        ItemStack item = player.getInventory().getItemInMainHand();
+        
+        if (item != null && ItemFactory.isBrewedTeapot(item)) {
+            handlePourForOther(player, targetPlayer, item);
+            event.setCancelled(true);
+        }
+    }
+
+    private void handlePourForOther(Player player, Player targetPlayer, ItemStack teapot) {
+        String variant = ItemFactory.getTeaVariant(teapot);
+        int cups = ItemFactory.getTeaCups(teapot);
+
+        if (cups <= 0) {
+            animator.reveal(player, "§cTeapot empty", null);
+            return;
+        }
+
+        ItemStack bottle = null;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.GLASS_BOTTLE) {
+                bottle = item;
+                break;
+            }
+        }
+
+        if (bottle == null) {
+            animator.reveal(player, "§cNeed empty bottle", null);
+            return;
+        }
+
+        bottle.setAmount(bottle.getAmount() - 1);
+        cups--;
+        if (cups == 0) {
+            ItemStack empty = ItemFactory.createEmptyTeapot();
+            player.getInventory().setItemInMainHand(empty);
+        } else {
+            String quality = ItemFactory.getTeaQuality(teapot);
+            String blend = ItemFactory.getTeaBlend(teapot);
+            teapot.setItemMeta(ItemFactory.createBrewedTeapot(variant, cups, quality, blend).getItemMeta());
+        }
+
+        ItemStack cup = ItemFactory.createCupOfTea(variant);
+        targetPlayer.getInventory().addItem(cup);
+
+        player.getWorld().playSound(player.getLocation(), Sound.ITEM_BOTTLE_FILL, 1.4f, 0.4f);
+        targetPlayer.getWorld().playSound(targetPlayer.getLocation(), Sound.ITEM_BOTTLE_FILL, 1.4f, 0.4f);
+
+        animator.reveal(player, "§b☕ Poured for " + targetPlayer.getName(), null);
+        animator.reveal(targetPlayer, "§b☕ " + player.getName() + " poured you tea", null);
     }
 
     @EventHandler
@@ -202,13 +260,30 @@ public class TeaBrewListener implements Listener {
         boolean isDried = ItemFactory.isDriedTeaLeaf(leaves);
         leaves.setAmount(leaves.getAmount() - required);
 
+        ItemStack offhand = player.getInventory().getItemInOffHand();
+        String blendIngredient = null;
+        if (offhand != null) {
+            if (offhand.getType() == Material.SWEET_BERRIES) {
+                blendIngredient = "SWEET_BERRIES";
+                offhand.setAmount(offhand.getAmount() - 1);
+            } else if (offhand.getType() == Material.SUGAR) {
+                blendIngredient = "SUGAR";
+                offhand.setAmount(offhand.getAmount() - 1);
+            } else if (ItemFactory.isFreshTeaLeaf(offhand) && ItemFactory.isDryTobaccoLeaf(player.getInventory().getItemInMainHand())) {
+                blendIngredient = "SMOKY_CHAI";
+            }
+        }
+
         TeaBrewManager.BrewSession session = new TeaBrewManager.BrewSession();
         session.startedAt = System.currentTimeMillis();
+        session.minBrewTime = plugin.getConfig().getLong("cultivar.tea-brewing.min-brew-seconds", 60) * 1000;
+        session.maxBrewTime = plugin.getConfig().getLong("cultivar.tea-brewing.max-brew-seconds", 90) * 1000;
         session.variant = isDried
             ? "black"
             : (Math.random() < 0.5 ? "green" : "herbal");
         session.complete = false;
         session.startedBy = player.getUniqueId();
+        session.blendIngredient = blendIngredient;
         teaBrewManager.activeSessions.put(cauldron.getLocation(), session);
 
         long brewTime =
@@ -292,6 +367,23 @@ public class TeaBrewListener implements Listener {
             return;
         }
 
+        long elapsed = System.currentTimeMillis() - session.startedAt;
+        TeaBrewManager.SteepQuality quality;
+        String qualityMessage;
+
+        if (elapsed < session.minBrewTime) {
+            quality = TeaBrewManager.SteepQuality.WEAK;
+            qualityMessage = "§7☕ A little weak...";
+        } else if (elapsed <= session.maxBrewTime) {
+            quality = TeaBrewManager.SteepQuality.PERFECT;
+            qualityMessage = "§a☕ Perfect steep!";
+        } else {
+            quality = TeaBrewManager.SteepQuality.BITTER;
+            qualityMessage = "§c☕ Over-steeped — bitter but strong";
+        }
+
+        session.quality = quality;
+
         teaBrewManager.activeSessions.remove(cauldron.getLocation());
 
         int maxCups = plugin
@@ -299,7 +391,9 @@ public class TeaBrewListener implements Listener {
             .getInt("cultivar.tea-brewing.max-cups-per-brew", 4);
         ItemStack brewed = ItemFactory.createBrewedTeapot(
             session.variant,
-            maxCups
+            maxCups,
+            quality != null ? quality.name() : null,
+            session.blendIngredient
         );
         player.getInventory().setItemInMainHand(brewed);
 
@@ -335,7 +429,7 @@ public class TeaBrewListener implements Listener {
                 0
             );
 
-        animator.reveal(player, "§a✦ Tea ready — " + session.variant, null);
+        animator.reveal(player, qualityMessage, null);
     }
 
     private void handlePourCup(Player player, ItemStack teapot) {
@@ -389,6 +483,9 @@ public class TeaBrewListener implements Listener {
 
     private void handleDrinkTea(Player player, ItemStack cup) {
         String variant = ItemFactory.getTeaVariant(cup);
+        String quality = ItemFactory.getTeaQuality(cup);
+        String blend = ItemFactory.getTeaBlend(cup);
+        
         if (variant == null) {
             return;
         }
@@ -403,6 +500,17 @@ public class TeaBrewListener implements Listener {
         @SuppressWarnings("unchecked")
         List<String> effects = (List<String>) config.get("effects");
 
+        double durationMultiplier = 1.0;
+        int amplifierBoost = 0;
+        boolean addNausea = false;
+
+        if ("WEAK".equals(quality)) {
+            durationMultiplier = 0.5;
+        } else if ("BITTER".equals(quality)) {
+            amplifierBoost = 1;
+            addNausea = true;
+        }
+
         for (String effectStr : effects) {
             String[] parts = effectStr.split(":");
             PotionEffectType type = PotionEffectType.getByKey(
@@ -412,11 +520,23 @@ public class TeaBrewListener implements Listener {
                 continue;
             }
 
-            int amplifier = Integer.parseInt(parts[1]);
-            int duration = Integer.parseInt(parts[2]) * 20;
+            int amplifier = Integer.parseInt(parts[1]) + amplifierBoost;
+            int duration = (int) (Integer.parseInt(parts[2]) * 20 * durationMultiplier);
             player.addPotionEffect(
                 new PotionEffect(type, duration, amplifier - 1)
             );
+        }
+
+        if ("SWEET_BERRIES".equals(blend)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0));
+        }
+
+        if ("SMOKY_CHAI".equals(blend) && ItemFactory.isDryTobaccoLeaf(cup)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 0));
+        }
+
+        if (addNausea) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 100, 0));
         }
 
         String message = (String) config.get("message");

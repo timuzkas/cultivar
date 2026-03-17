@@ -92,5 +92,58 @@ public class RecipeRegistry {
             recipe.addIngredient(Material.BUCKET);
             plugin.getServer().addRecipe(recipe);
         }
+
+        // Clay Pipe: CLAY_BALL + STICK → 1
+        if (plugin.getConfig().getBoolean("recipes.clay-pipe", true)) {
+            NamespacedKey key = new NamespacedKey(plugin, "clay_pipe");
+            plugin.getServer().removeRecipe(key);
+            ShapelessRecipe recipe = new ShapelessRecipe(
+                key,
+                ItemFactory.createClayPipe()
+            );
+            recipe.addIngredient(Material.CLAY_BALL);
+            recipe.addIngredient(Material.STICK);
+            plugin.getServer().addRecipe(recipe);
+        }
+
+        // Meerschaum Pipe: QUARTZ + STICK + GOLD_INGOT → 1
+        if (plugin.getConfig().getBoolean("recipes.meerschaum-pipe", true)) {
+            NamespacedKey key = new NamespacedKey(plugin, "meerschaum_pipe");
+            plugin.getServer().removeRecipe(key);
+            ShapelessRecipe recipe = new ShapelessRecipe(
+                key,
+                ItemFactory.createMeerschaumPipe()
+            );
+            recipe.addIngredient(Material.QUARTZ);
+            recipe.addIngredient(Material.STICK);
+            recipe.addIngredient(Material.GOLD_INGOT);
+            plugin.getServer().addRecipe(recipe);
+        }
+
+        // Mushroom Spore: BROWN_MUSHROOM + RED_MUSHROOM → 1
+        if (plugin.getConfig().getBoolean("recipes.mushroom-spore", true)) {
+            NamespacedKey key = new NamespacedKey(plugin, "mushroom_spore");
+            plugin.getServer().removeRecipe(key);
+            ShapelessRecipe recipe = new ShapelessRecipe(
+                key,
+                ItemFactory.createSporeItem()
+            );
+            recipe.addIngredient(Material.BROWN_MUSHROOM);
+            recipe.addIngredient(Material.RED_MUSHROOM);
+            plugin.getServer().addRecipe(recipe);
+        }
+
+        // Harvest Basket: BARREL + HOPPER → 1
+        if (plugin.getConfig().getBoolean("recipes.harvest-basket", true)) {
+            NamespacedKey key = new NamespacedKey(plugin, "harvest_basket");
+            plugin.getServer().removeRecipe(key);
+            ShapelessRecipe recipe = new ShapelessRecipe(
+                key,
+                ItemFactory.createHarvestBasket()
+            );
+            recipe.addIngredient(Material.BARREL);
+            recipe.addIngredient(Material.HOPPER);
+            plugin.getServer().addRecipe(recipe);
+        }
     }
 }
