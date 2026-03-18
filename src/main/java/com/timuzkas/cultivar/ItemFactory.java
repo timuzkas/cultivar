@@ -154,6 +154,14 @@ public class ItemFactory {
         "cultivar",
         "air_cured_leaf"
     );
+    private static final NamespacedKey FERMENTED_BUD = new NamespacedKey(
+        "cultivar",
+        "fermented_bud"
+    );
+    private static final NamespacedKey AGED_TOBACCO = new NamespacedKey(
+        "cultivar",
+        "aged_tobacco"
+    );
     private static final NamespacedKey RACK_DRIED_TEA = new NamespacedKey(
         "cultivar",
         "rack_dried_tea"
@@ -360,6 +368,52 @@ public class ItemFactory {
                 .getPersistentDataContainer()
                 .has(AIR_CURED_LEAF, PersistentDataType.BOOLEAN)
         );
+    }
+
+    public static ItemStack createFermentedBud() {
+        ItemStack item = new ItemStack(Material.LIME_DYE, 1);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§2Fermented Bud");
+        meta.setLore(java.util.List.of("§8Slow-cured in darkness"));
+        meta
+            .getPersistentDataContainer()
+            .set(FERMENTED_BUD, PersistentDataType.BOOLEAN, true);
+        meta
+            .getPersistentDataContainer()
+            .set(CANNABIS_BUD, PersistentDataType.BOOLEAN, true);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static ItemStack createAgedTobacco() {
+        ItemStack item = new ItemStack(Material.DEAD_BUSH, 1);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§6Aged Tobacco");
+        meta.setLore(java.util.List.of("§8Time and darkness"));
+        meta
+            .getPersistentDataContainer()
+            .set(AGED_TOBACCO, PersistentDataType.BOOLEAN, true);
+        meta
+            .getPersistentDataContainer()
+            .set(DRY_LEAF, PersistentDataType.BOOLEAN, true);
+        meta
+            .getPersistentDataContainer()
+            .set(new NamespacedKey("cultivar", "cure_type"), 
+                PersistentDataType.STRING, "aged");
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isFermented(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) return false;
+        return item.getItemMeta().getPersistentDataContainer()
+            .has(FERMENTED_BUD, PersistentDataType.BOOLEAN);
+    }
+
+    public static boolean isAgedTobacco(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) return false;
+        return item.getItemMeta().getPersistentDataContainer()
+            .has(AGED_TOBACCO, PersistentDataType.BOOLEAN);
     }
 
     public static ItemStack createRackDriedTeaLeaf() {

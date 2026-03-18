@@ -461,4 +461,82 @@ public class Database {
             stmt.executeUpdate();
         }
     }
+
+    public void createFermentationTable() throws SQLException {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS fermentation (
+              id TEXT PRIMARY KEY,
+              world TEXT NOT NULL,
+              chest_x INTEGER NOT NULL,
+              chest_y INTEGER NOT NULL,
+              chest_z INTEGER NOT NULL,
+              slot_index INTEGER NOT NULL,
+              item_type TEXT NOT NULL,
+              started_at INTEGER NOT NULL,
+              ferment_due INTEGER NOT NULL,
+              disturbed INTEGER DEFAULT 0
+            );
+            """;
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    public void saveFermentEntry(FermentEntry entry) throws SQLException {
+        String sql = """
+            INSERT OR REPLACE INTO fermentation 
+            (id, world, chest_x, chest_y, chest_z, slot_index, item_type, started_at, ferment_due, disturbed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, entry.id);
+            stmt.setString(2, entry.chestLocation.getWorld().getName());
+            stmt.setInt(3, entry.chestLocation.getBlockX());
+            stmt.setInt(4, entry.chestLocation.getBlockY());
+            stmt.setInt(5, entry.chestLocation.getBlockZ());
+            stmt.setInt(6, entry.slotIndex);
+            stmt.setString(7, entry.itemType);
+            stmt.setLong(8, entry.startedAt);
+            stmt.setLong(9, entry.fermentDue);
+            stmt.setInt(10, entry.disturbed ? 1 : 0);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void deleteFermentEntry(String id) throws SQLException {
+        String sql = "DELETE FROM fermentation WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            stmt.executeUpdate();
+        }
+    }
+
+    public List<FermentEntry> loadAllFermentEntries() throws SQLException {
+        List<FermentEntry> entries = new ArrayList<>();
+        String sql = "SELECT * FROM fermentation";
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                FermentEntry entry = new FermentEntry();
+                entry.id = rs.getString("id");
+                String worldName = rs.getString("world");
+                org.bukkit.World world = org.bukkit.Bukkit.getWorld(worldName);
+                if (world != null) {
+                    entry.chestLocation = new org.bukkit.Location(
+                        world,
+                        rs.getInt("chest_x"),
+                        rs.getInt("chest_y"),
+                        rs.getInt("chest_z")
+                    );
+                }
+                entry.slotIndex = rs.getInt("slot_index");
+                entry.itemType = rs.getString("item_type");
+                entry.startedAt = rs.getLong("started_at");
+                entry.fermentDue = rs.getLong("ferment_due");
+                entry.disturbed = rs.getInt("disturbed") == 1;
+                entries.add(entry);
+            }
+        }
+        return entries;
+    }
 }

@@ -147,18 +147,27 @@ public class PipeListener implements Listener {
         boolean isTrim = false;
         boolean isSpliff = false;
         boolean isHerbalFill = false;
+        boolean isFermented = false;
 
         if (ItemFactory.isCannabisBud(off)) {
             material = CropType.CANNABIS;
         } else if (ItemFactory.isCannabisTrim(off)) {
             material = CropType.CANNABIS;
             isTrim = true;
+        } else if (ItemFactory.isFermented(off)) {
+            material = CropType.CANNABIS;
+            isFermented = true;
         } else if (ItemFactory.isDryTobaccoLeaf(off)) {
             material = CropType.TOBACCO;
             cureType = FurnaceListener.getCureType(off);
         } else if (ItemFactory.isAirCuredLeaf(off)) {
             material = CropType.TOBACCO;
             cureType = "air";
+        } else if (ItemFactory.isAgedTobacco(off)) {
+            material = CropType.TOBACCO;
+            cureType = "aged";
+        } else if (ItemFactory.isFermented(off)) {
+            material = CropType.CANNABIS;
         } else if (ItemFactory.isSpliff(off)) {
             isSpliff = true;
         } else if (ItemFactory.isHerbalFill(off)) {
@@ -250,6 +259,18 @@ public class PipeListener implements Listener {
             }
         } else {
             filled = ItemFactory.createFilledPipe(material, tier);
+        }
+
+        if (isFermented) {
+            ItemMeta meta = filled.getItemMeta();
+            if (meta != null) {
+                meta.getPersistentDataContainer().set(
+                    new org.bukkit.NamespacedKey("cultivar", "fermented"),
+                    org.bukkit.persistence.PersistentDataType.BOOLEAN,
+                    true
+                );
+                filled.setItemMeta(meta);
+            }
         }
 
         if (cureType != null && material == CropType.TOBACCO) {
@@ -362,10 +383,11 @@ public class PipeListener implements Listener {
         boolean isTrim = isTrimPipe(lit);
         boolean isSpliff = isSpliffPipe(lit);
         boolean isHerbalFill = isHerbalPipe(lit);
+        boolean isFermented = isFermentedPipe(lit);
 
         double durationMultiplier = 1.0;
         if (!isSeasoned && smokesUsed < 3) {
-            durationMultiplier = 0.8;
+            durationMultiplier *= 0.8;
         }
         if (tier == PipeTier.MEERSCHAUM) {
             durationMultiplier *= 1.1;
@@ -437,10 +459,19 @@ public class PipeListener implements Listener {
                 }
                 if (appliedAny) {
                     String msg = "§e⌐ " + materialName + " — §7Drawing deep...";
+                    if (isFermented) {
+                        msg = "§e⌐ Fermented " + materialName + " — §7Smooth...";
+                    }
                     animator.reveal(player, msg, null);
                 }
             } else {
                 plugin.getLogger().info("No smoking effects found for path: " + path);
+            }
+
+            if (isFermented) {
+                player.addPotionEffect(
+                    new PotionEffect(PotionEffectType.SLOW, 1200, 0)
+                );
             }
 
             if (material == CropType.TOBACCO) {
@@ -459,6 +490,20 @@ public class PipeListener implements Listener {
                 } else if ("fire".equals(cureType)) {
                     player.addPotionEffect(
                         new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 300, 0)
+                    );
+                } else if ("aged".equals(cureType)) {
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SPEED, 200, 1)
+                    );
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SATURATION, 1200, 0)
+                    );
+                } else if ("air".equals(cureType)) {
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SPEED, 120, 0)
+                    );
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SATURATION, 40, 0)
                     );
                 }
             }
@@ -633,6 +678,14 @@ public class PipeListener implements Listener {
         if (lit == null || lit.getItemMeta() == null) return false;
         return lit.getItemMeta().getPersistentDataContainer().has(
             new org.bukkit.NamespacedKey("cultivar", "is_herbal"),
+            org.bukkit.persistence.PersistentDataType.BOOLEAN
+        );
+    }
+
+    private boolean isFermentedPipe(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return false;
+        return lit.getItemMeta().getPersistentDataContainer().has(
+            new org.bukkit.NamespacedKey("cultivar", "fermented"),
             org.bukkit.persistence.PersistentDataType.BOOLEAN
         );
     }

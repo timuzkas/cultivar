@@ -15,6 +15,7 @@ public class Cultivar extends JavaPlugin {
     private HarvestBasketManager basketManager;
     private GrowerManager growerManager;
     private DryingRackManager dryingRackManager;
+    private FermentationManager fermentationManager;
 
     @Override
     public void onEnable() {
@@ -59,6 +60,20 @@ public class Cultivar extends JavaPlugin {
         growerManager = new GrowerManager(database, this);
 
         dryingRackManager = new DryingRackManager(this);
+
+        try {
+            database.createFermentationTable();
+        } catch (Exception e) {
+            getLogger().severe("Failed to create fermentation table: " + e.getMessage());
+        }
+        fermentationManager = new FermentationManager();
+        try {
+            for (FermentEntry entry : database.loadAllFermentEntries()) {
+                fermentationManager.register(entry);
+            }
+        } catch (Exception e) {
+            getLogger().severe("Failed to load fermentation data: " + e.getMessage());
+        }
 
         animator = new ActionBarAnimator(this);
         pipeManager = new PipeManager();
@@ -117,6 +132,13 @@ public class Cultivar extends JavaPlugin {
         getServer()
             .getPluginManager()
             .registerEvents(new DryingRackListener(dryingRackManager, animator), this);
+        getServer()
+            .getPluginManager()
+            .registerEvents(new FermentationListener(fermentationManager, this), this);
+
+        // Start tasks
+        new FermentationTask(fermentationManager, this).runTaskTimer(this, 0, 
+            getConfig().getLong("cultivar.fermentation.check-interval-ticks", 1200));
 
         // Register recipes
         recipeRegistry.register();

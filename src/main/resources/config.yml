@@ -95,6 +95,12 @@ blends:
   herbal-night-vision-seconds: 120
   spiced-regen-amplifier: 1
 
+fermentation:
+  duration-minutes: 40
+  min-y-level: 40
+  required-light-level: 0
+  check-interval-ticks: 1200
+
 loot:
   inject-dungeon: true
   inject-village: true
