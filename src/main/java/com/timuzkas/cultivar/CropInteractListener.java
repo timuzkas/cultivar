@@ -3,6 +3,7 @@ package com.timuzkas.cultivar;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -35,6 +36,7 @@ public class CropInteractListener implements Listener {
     private SoilManager soilManager;
     private PlayerStrainManager strainManager;
     private HarvestBasketManager basketManager;
+    private GrowerManager growerManager;
 
     public CropInteractListener(
         CropManager cropManager,
@@ -56,6 +58,10 @@ public class CropInteractListener implements Listener {
 
     public void setBasketManager(HarvestBasketManager basketManager) {
         this.basketManager = basketManager;
+    }
+
+    public void setGrowerManager(GrowerManager growerManager) {
+        this.growerManager = growerManager;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -242,10 +248,18 @@ public class CropInteractListener implements Listener {
             crop.strainId != null &&
             strainManager != null
         ) {
+            Set<String> discovered = strainManager.getDiscoveredStrains(
+                player.getUniqueId()
+            );
+            boolean isNew = discovered.add(crop.strainId);
             strainManager.addDiscoveredStrain(
                 player.getUniqueId(),
                 crop.strainId
             );
+            if (isNew) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId);
+                animator.reveal(player, "§6✦ New Strain: " + strain.name, null);
+            }
         }
 
         int yield = calculateYield(crop);
@@ -256,13 +270,28 @@ public class CropInteractListener implements Listener {
             mushroomRightClicks.remove(block.getLocation());
         }
 
+        boolean isOwner = crop.ownerUuid.equals(player.getUniqueId());
+        String breederUuid = crop.originalBreederUuid != null ? crop.originalBreederUuid.toString() : null;
+        String breederName = crop.originalBreederName;
+        if (breederUuid == null && crop.strainId != null) {
+            breederUuid = crop.ownerUuid.toString();
+            breederName = player.getName();
+        }
+
         int seedCount = 1 + (int) (Math.random() * 2);
+        float seedQuality = 0.0f;
+        if (growerManager != null && crop.type == CropType.CANNABIS) {
+            seedQuality = growerManager.getSeedQualityBonus(player.getUniqueId());
+        }
         for (int i = 0; i < seedCount; i++) {
             ItemStack seed;
             if (crop.type == CropType.CANNABIS && crop.strainId != null) {
                 seed = ItemFactory.createCannabisSeed(
                     crop.strainId,
-                    crop.strainName
+                    crop.strainName,
+                    breederUuid,
+                    breederName,
+                    seedQuality
                 );
             } else if (crop.type == CropType.MUSHROOM) {
                 seed = ItemFactory.createMushroomSeed();
@@ -317,6 +346,33 @@ public class CropInteractListener implements Listener {
             soilManager.degrade(farmlandLoc);
         }
 
+        if (growerManager != null) {
+            int harvestScore = growerManager.getEventScore("harvest");
+            if (harvestScore > 0) {
+                String newTitle = growerManager.addScore(player.getUniqueId(), player.getName(), harvestScore);
+                if (newTitle != null) {
+                    animator.reveal(player, "§6✦ Grower rank: " + newTitle, null);
+                }
+            }
+
+            if (!isOwner && crop.originalBreederUuid != null && !crop.originalBreederUuid.equals(player.getUniqueId())) {
+                int otherStrainScore = growerManager.getEventScore("harvest-other-strain");
+                if (otherStrainScore > 0) {
+                    growerManager.addScore(crop.originalBreederUuid, crop.originalBreederName, otherStrainScore);
+                }
+            }
+
+            if (crop.stress == 0) {
+                int zeroStressScore = growerManager.getEventScore("zero-stress-harvest");
+                if (zeroStressScore > 0) {
+                    String newTitle = growerManager.addScore(player.getUniqueId(), player.getName(), zeroStressScore);
+                    if (newTitle != null) {
+                        animator.reveal(player, "§6✦ Grower rank: " + newTitle, null);
+                    }
+                }
+            }
+        }
+
         animator.reveal(
             player,
             "§2Harvested " +
@@ -344,10 +400,18 @@ public class CropInteractListener implements Listener {
             crop.strainId != null &&
             strainManager != null
         ) {
+            Set<String> discovered = strainManager.getDiscoveredStrains(
+                player.getUniqueId()
+            );
+            boolean isNew = discovered.add(crop.strainId);
             strainManager.addDiscoveredStrain(
                 player.getUniqueId(),
                 crop.strainId
             );
+            if (isNew) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId);
+                animator.reveal(player, "§6✦ New Strain: " + strain.name, null);
+            }
         }
 
         int yield = calculateYield(crop);
@@ -428,6 +492,7 @@ public class CropInteractListener implements Listener {
             basketManager.addToBasket(player, basket, item);
         }
     }
+
     private void handleWater(CropRecord crop, Player player, ItemStack bucket) {
         crop.lastWatered = System.currentTimeMillis();
         crop.dirty = true;
@@ -467,6 +532,18 @@ public class CropInteractListener implements Listener {
                 0.2,
                 0
             );
+
+        if (growerManager != null) {
+            int mistScore = growerManager.getEventScore("mist");
+            if (mistScore > 0) {
+                String newTitle = growerManager.addScore(player.getUniqueId(), player.getName(), mistScore);
+                if (newTitle != null) {
+                    animator.reveal(player, "§6✦ Grower rank: " + newTitle + " §b❋ Misted", null);
+                    return;
+                }
+            }
+        }
+
         animator.reveal(player, "§b❋ Misted", null);
     }
 
@@ -478,6 +555,20 @@ public class CropInteractListener implements Listener {
         crop.flags.remove(CropFlag.NEEDS_PRUNING);
         crop.lastPruned = System.currentTimeMillis();
         crop.dirty = true;
+
+        int trimAmount = 1 + (int) (Math.random() * 2);
+        ItemStack trim;
+        if (crop.strainId != null) {
+            trim = ItemFactory.createCannabisTrim(
+                crop.strainId,
+                crop.strainName
+            );
+        } else {
+            trim = ItemFactory.createCannabisTrim();
+        }
+        trim.setAmount(trimAmount);
+        player.getInventory().addItem(trim);
+
         player
             .getWorld()
             .playSound(
@@ -486,7 +577,19 @@ public class CropInteractListener implements Listener {
                 1.2f,
                 1.0f
             );
-        animator.reveal(player, "§2✂ Pruned — growing well", null);
+
+        if (growerManager != null) {
+            int pruneScore = growerManager.getEventScore("prune");
+            if (pruneScore > 0) {
+                String newTitle = growerManager.addScore(player.getUniqueId(), player.getName(), pruneScore);
+                if (newTitle != null) {
+                    animator.reveal(player, "§6✦ Grower rank: " + newTitle + " §2✂ Pruned — " + trimAmount + " trim", null);
+                    return;
+                }
+            }
+        }
+
+        animator.reveal(player, "§2✂ Pruned — " + trimAmount + " trim", null);
     }
 
     private void handleStrip(CropRecord crop, Player player) {
@@ -507,6 +610,18 @@ public class CropInteractListener implements Listener {
                 1.3f,
                 1.0f
             );
+
+        if (growerManager != null) {
+            int stripScore = growerManager.getEventScore("strip");
+            if (stripScore > 0) {
+                String newTitle = growerManager.addScore(player.getUniqueId(), player.getName(), stripScore);
+                if (newTitle != null) {
+                    animator.reveal(player, "§6✦ Grower rank: " + newTitle + " §6✦ Leaves stripped", null);
+                    return;
+                }
+            }
+        }
+
         animator.reveal(player, "§6✦ Leaves stripped", null);
     }
 
@@ -816,6 +931,10 @@ public class CropInteractListener implements Listener {
             if (crop.flags.contains(CropFlag.OVERGROWN)) {
                 yield -= 1;
             }
+            if (crop.strainId != null) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId);
+                yield = (int) Math.round(yield * (1 + strain.yieldBonus));
+            }
         }
 
         if (crop.type == CropType.TOBACCO) {
@@ -824,7 +943,11 @@ public class CropInteractListener implements Listener {
             }
         }
 
-        return Math.max(1, yield);
+        int yieldFloor = 1;
+        if (growerManager != null) {
+            yieldFloor += growerManager.getYieldFloorBonus(crop.ownerUuid);
+        }
+        return Math.max(yieldFloor, yield);
     }
 
     private ItemStack getHarvestDrop(CropRecord crop, int yield) {

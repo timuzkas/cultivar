@@ -40,11 +40,17 @@ public class CropPlaceListener implements Listener {
         CropType type = null;
         String strainId = null;
         String strainName = null;
+        String breederUuid = null;
+        String breederName = null;
+        float seedQuality = 0.0f;
 
         if (ItemFactory.isCannabisSeed(item) && isFarmland) {
             type = CropType.CANNABIS;
             strainId = ItemFactory.getStrainId(item);
             strainName = ItemFactory.getStrainName(item);
+            breederUuid = ItemFactory.getOriginalBreeder(item);
+            breederName = ItemFactory.getOriginalBreederName(item);
+            seedQuality = ItemFactory.getSeedQuality(item);
         } else if (ItemFactory.isTobaccoSeed(item) && isFarmland) {
             type = CropType.TOBACCO;
         } else if (ItemFactory.isTeaSeed(item) && (isFarmland || isFlowerPot)) {
@@ -77,6 +83,13 @@ public class CropPlaceListener implements Listener {
                 } else {
                     record.strainId = strainId;
                     record.strainName = strainName;
+                    if (breederUuid != null && !breederUuid.isEmpty()) {
+                        record.originalBreederUuid = UUID.fromString(breederUuid);
+                        record.originalBreederName = breederName;
+                    }
+                    if (seedQuality > 0) {
+                        record.seedQualityBonus = seedQuality;
+                    }
                 }
             }
 

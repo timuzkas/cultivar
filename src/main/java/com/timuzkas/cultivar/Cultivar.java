@@ -13,6 +13,8 @@ public class Cultivar extends JavaPlugin {
     private SoilManager soilManager;
     private PlayerStrainManager playerStrainManager;
     private HarvestBasketManager basketManager;
+    private GrowerManager growerManager;
+    private DryingRackManager dryingRackManager;
 
     @Override
     public void onEnable() {
@@ -54,6 +56,10 @@ public class Cultivar extends JavaPlugin {
 
         playerStrainManager = new PlayerStrainManager(database, this);
 
+        growerManager = new GrowerManager(database, this);
+
+        dryingRackManager = new DryingRackManager(this);
+
         animator = new ActionBarAnimator(this);
         pipeManager = new PipeManager();
         teaBrewManager = new TeaBrewManager();
@@ -71,6 +77,7 @@ public class Cultivar extends JavaPlugin {
         cropInteractListener.setSoilManager(soilManager);
         cropInteractListener.setStrainManager(playerStrainManager);
         cropInteractListener.setBasketManager(basketManager);
+        cropInteractListener.setGrowerManager(growerManager);
         getServer()
             .getPluginManager()
             .registerEvents(cropInteractListener, this);
@@ -100,13 +107,16 @@ public class Cultivar extends JavaPlugin {
             .registerEvents(new TeaDryingListener(this, animator), this);
         getServer()
             .getPluginManager()
-            .registerEvents(new PlayerJoinListener(playerStrainManager), this);
+            .registerEvents(new PlayerJoinListener(playerStrainManager, growerManager), this);
         getServer()
             .getPluginManager()
             .registerEvents(new FarmlandInteractListener(soilManager, animator), this);
         getServer()
             .getPluginManager()
             .registerEvents(new CraftingListener(), this);
+        getServer()
+            .getPluginManager()
+            .registerEvents(new DryingRackListener(dryingRackManager, animator), this);
 
         // Register recipes
         recipeRegistry.register();
@@ -115,11 +125,13 @@ public class Cultivar extends JavaPlugin {
         CultivarCommand command = new CultivarCommand(cropManager, animator, this);
         command.setStrainManager(playerStrainManager);
         command.setSoilManager(soilManager);
+        command.setGrowerManager(growerManager);
         getCommand("cultivar").setExecutor(command);
 
         // Start tasks
         CropGrowthTask growthTask = new CropGrowthTask(cropManager, this);
         growthTask.setSoilManager(soilManager);
+        growthTask.setGrowerManager(growerManager);
         growthTask.runTaskTimer(this, 0, 1200); // 60s
         new CropParticleTask(cropManager, this).runTaskTimer(this, 0, 600); // 30s
         new ProximityNotifyTask(cropManager, animator, this).runTaskTimer(

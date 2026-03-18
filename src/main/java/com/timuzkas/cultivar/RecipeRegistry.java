@@ -2,6 +2,7 @@ package com.timuzkas.cultivar;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.plugin.Plugin;
 
@@ -62,6 +63,21 @@ public class RecipeRegistry {
                 ItemFactory.createCompost()
             );
             recipe.addIngredient(3, Material.BONE_MEAL);
+            recipe.addIngredient(Material.DIRT);
+            plugin.getServer().addRecipe(recipe);
+        }
+
+        // Cannabis Trim Compost: CANNABIS_TRIM + DIRT → 2
+        if (plugin.getConfig().getBoolean("recipes.trim-compost", true)) {
+            NamespacedKey key = new NamespacedKey(plugin, "trim_compost");
+            plugin.getServer().removeRecipe(key);
+            ShapelessRecipe recipe = new ShapelessRecipe(
+                key,
+                ItemFactory.createCompost()
+            );
+            recipe.addIngredient(
+                new RecipeChoice.ExactChoice(ItemFactory.createCannabisTrim())
+            );
             recipe.addIngredient(Material.DIRT);
             plugin.getServer().addRecipe(recipe);
         }

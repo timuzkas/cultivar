@@ -144,18 +144,31 @@ public class PipeListener implements Listener {
         CropType material = null;
         PipeTier tier = ItemFactory.getPipeTier(main);
         String cureType = null;
+        boolean isTrim = false;
+        boolean isSpliff = false;
+        boolean isHerbalFill = false;
 
         if (ItemFactory.isCannabisBud(off)) {
             material = CropType.CANNABIS;
+        } else if (ItemFactory.isCannabisTrim(off)) {
+            material = CropType.CANNABIS;
+            isTrim = true;
         } else if (ItemFactory.isDryTobaccoLeaf(off)) {
             material = CropType.TOBACCO;
             cureType = FurnaceListener.getCureType(off);
+        } else if (ItemFactory.isAirCuredLeaf(off)) {
+            material = CropType.TOBACCO;
+            cureType = "air";
+        } else if (ItemFactory.isSpliff(off)) {
+            isSpliff = true;
+        } else if (ItemFactory.isHerbalFill(off)) {
+            isHerbalFill = true;
         }
 
-        if (material == null) {
+        if (material == null && !isSpliff && !isHerbalFill) {
             animator.reveal(
                 player,
-                "§cNeed cannabis or tobacco in offhand",
+                "§cNeed cannabis, trim, tobacco, spliff, or herbal fill in offhand",
                 null
             );
             return;
@@ -163,7 +176,81 @@ public class PipeListener implements Listener {
 
         off.setAmount(off.getAmount() - 1);
 
-        ItemStack filled = ItemFactory.createFilledPipe(material, tier);
+        ItemStack filled;
+        if (isSpliff) {
+            String strainId = ItemFactory.getStrainId(off);
+            String strainName = ItemFactory.getStrainName(off);
+            filled = ItemFactory.createFilledPipe(CropType.CANNABIS, tier);
+            ItemMeta meta = filled.getItemMeta();
+            if (meta != null) {
+                String displayName = tier.getColor() + "⌐ " + tier.name() + " Pipe §8[Spliff]";
+                if (strainName != null) {
+                    displayName = tier.getColor() + "⌐ " + tier.name() + " Pipe §8[Spliff: " + strainName + "]";
+                }
+                meta.setDisplayName(displayName);
+                meta.getPersistentDataContainer().set(
+                    new org.bukkit.NamespacedKey("cultivar", "is_spliff"),
+                    org.bukkit.persistence.PersistentDataType.BOOLEAN,
+                    true
+                );
+                if (strainId != null) {
+                    meta.getPersistentDataContainer().set(
+                        new org.bukkit.NamespacedKey("cultivar", "strain_id"),
+                        org.bukkit.persistence.PersistentDataType.STRING,
+                        strainId
+                    );
+                }
+                if (strainName != null) {
+                    meta.getPersistentDataContainer().set(
+                        new org.bukkit.NamespacedKey("cultivar", "strain_name"),
+                        org.bukkit.persistence.PersistentDataType.STRING,
+                        strainName
+                    );
+                }
+                filled.setItemMeta(meta);
+            }
+        } else if (isHerbalFill) {
+            filled = ItemFactory.createFilledPipe(CropType.CANNABIS, tier);
+            ItemMeta meta = filled.getItemMeta();
+            if (meta != null) {
+                String displayName = tier.getColor() + "⌐ " + tier.name() + " Pipe §8[Herbal]";
+                meta.setDisplayName(displayName);
+                meta.getPersistentDataContainer().set(
+                    new org.bukkit.NamespacedKey("cultivar", "is_herbal"),
+                    org.bukkit.persistence.PersistentDataType.BOOLEAN,
+                    true
+                );
+                filled.setItemMeta(meta);
+            }
+        } else if (isTrim) {
+            filled = ItemFactory.createFilledPipe(CropType.CANNABIS, tier);
+            ItemMeta meta = filled.getItemMeta();
+            if (meta != null) {
+                String strainId = ItemFactory.getStrainId(off);
+                String strainName = ItemFactory.getStrainName(off);
+                String displayName = strainName != null
+                    ? tier.getColor() + "⌐ " + tier.name() + " Pipe §8[Trim: " + strainName + "]"
+                    : tier.getColor() + "⌐ " + tier.name() + " Pipe §8[Trim]";
+                meta.setDisplayName(displayName);
+                if (strainId != null) {
+                    meta.getPersistentDataContainer().set(
+                        new org.bukkit.NamespacedKey("cultivar", "strain_id"),
+                        org.bukkit.persistence.PersistentDataType.STRING,
+                        strainId
+                    );
+                }
+                if (strainName != null) {
+                    meta.getPersistentDataContainer().set(
+                        new org.bukkit.NamespacedKey("cultivar", "strain_name"),
+                        org.bukkit.persistence.PersistentDataType.STRING,
+                        strainName
+                    );
+                }
+                filled.setItemMeta(meta);
+            }
+        } else {
+            filled = ItemFactory.createFilledPipe(material, tier);
+        }
 
         if (cureType != null && material == CropType.TOBACCO) {
             ItemMeta meta = filled.getItemMeta();
@@ -199,9 +286,10 @@ public class PipeListener implements Listener {
                 0.4f
             );
 
+        String matName = isTrim ? "trim" : material.name().toLowerCase();
         animator.reveal(
             player,
-            "§8⌐ Pipe packed — light it with Flint & Steel",
+            "§8⌐ Pipe packed with " + matName + " — light it with Flint & Steel",
             null
         );
     }
@@ -255,10 +343,8 @@ public class PipeListener implements Listener {
     private void handleSmokePipe(Player player, ItemStack lit) {
         long now = System.currentTimeMillis();
 
-        // Manual Puff Visuals & Durability Cost
         handlePuff(player, lit);
 
-        // Cooldown for potion effects
         long cooldown = plugin.getConfig().getLong("cultivar.smoking.cooldown-seconds", 5) * 1000;
         Long last = pipeManager.lastSmoked.get(player.getUniqueId());
         if (last != null && now - last < cooldown) {
@@ -273,6 +359,9 @@ public class PipeListener implements Listener {
         PipeTier tier = ItemFactory.getPipeTier(lit);
         int smokesUsed = ItemFactory.getPipeSmokesUsed(lit);
         boolean isSeasoned = ItemFactory.isPipeSeasoned(lit);
+        boolean isTrim = isTrimPipe(lit);
+        boolean isSpliff = isSpliffPipe(lit);
+        boolean isHerbalFill = isHerbalPipe(lit);
 
         double durationMultiplier = 1.0;
         if (!isSeasoned && smokesUsed < 3) {
@@ -281,82 +370,111 @@ public class PipeListener implements Listener {
         if (tier == PipeTier.MEERSCHAUM) {
             durationMultiplier *= 1.1;
         }
+        if (isTrim) {
+            durationMultiplier *= 0.5;
+        }
+        if (isSpliff) {
+            durationMultiplier *= 0.7;
+        }
 
-        String materialName = material.name().toLowerCase(java.util.Locale.ROOT);
-        String path = "cultivar.smoking." + materialName + "-effects";
-        List<String> effects = null;
+        String materialName = material != null ? material.name().toLowerCase(java.util.Locale.ROOT) : "cannabis";
         
-        if (plugin.getConfig().isList(path)) {
-            effects = plugin.getConfig().getStringList(path);
+        if (isTrim) {
+            String strainId = getTrimStrainId(lit);
+            String strainName = getTrimStrainName(lit);
+            
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)(60 * durationMultiplier), 0));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int)(80 * durationMultiplier), 0));
+            
+            String msg = "§e⌐ Trim — §7Mild effect";
+            if (strainName != null) {
+                msg = "§e⌐ " + strainName + " trim — §7Mild effect";
+            }
+            animator.reveal(player, msg, null);
+        } else if (isSpliff) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int)(60 * durationMultiplier), 0));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int)(100 * durationMultiplier * 0.5), 0));
+            
+            animator.reveal(player, "§e⌐ Spliff — §7Mixed blend", null);
+        } else if (isHerbalFill) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, (int)(120 * 20), 0));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, (int)(90 * 20), 0));
+            
+            animator.reveal(player, "§e⌐ Herbal — §7Explorer's blend", null);
         } else {
-            org.bukkit.configuration.ConfigurationSection effectsSection = plugin.getConfig().getConfigurationSection(path);
-            if (effectsSection != null) {
-                effects = effectsSection.getStringList("effects");
-            }
-        }
-
-        if (effects != null && !effects.isEmpty()) {
-            boolean appliedAny = false;
-            for (String effectStr : effects) {
-                String[] parts = effectStr.split(":");
-                if (parts.length < 3) continue;
-                
-                String typeName = parts[0].toLowerCase(java.util.Locale.ROOT);
-                PotionEffectType type = PotionEffectType.getByKey(NamespacedKey.minecraft(typeName));
-                if (type == null) {
-                    plugin.getLogger().warning("Unknown potion effect type in config: " + typeName);
-                    continue;
-                }
-                
-                int amplifier = Integer.parseInt(parts[1]);
-                int duration = (int) (Integer.parseInt(parts[2]) * 20 * durationMultiplier);
-                
-                if (duration > 0) {
-                    player.addPotionEffect(new PotionEffect(type, duration, amplifier));
-                    appliedAny = true;
+            String path = "cultivar.smoking." + materialName + "-effects";
+            List<String> effects = null;
+            
+            if (plugin.getConfig().isList(path)) {
+                effects = plugin.getConfig().getStringList(path);
+            } else {
+                org.bukkit.configuration.ConfigurationSection effectsSection = plugin.getConfig().getConfigurationSection(path);
+                if (effectsSection != null) {
+                    effects = effectsSection.getStringList("effects");
                 }
             }
-            if (appliedAny) {
-                String msg = "§e⌐ " + materialName + " — §7Drawing deep...";
-                animator.reveal(player, msg, null);
-            }
-        } else {
-            // Debug: tell the player if no effects were found in config
-            plugin.getLogger().info("No smoking effects found for path: " + path);
-        }
 
-        if (material == CropType.TOBACCO) {
-            String cureType = getTobaccoCureType(lit);
-            if ("light".equals(cureType)) {
-                player.addPotionEffect(
-                    new PotionEffect(PotionEffectType.SPEED, 100, 0)
-                );
-            } else if ("dark".equals(cureType)) {
-                player.addPotionEffect(
-                    new PotionEffect(PotionEffectType.SPEED, 150, 0)
-                );
-                player.addPotionEffect(
-                    new PotionEffect(PotionEffectType.CONFUSION, 60, 0)
-                );
-            } else if ("fire".equals(cureType)) {
-                player.addPotionEffect(
-                    new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 300, 0)
-                );
+            if (effects != null && !effects.isEmpty()) {
+                boolean appliedAny = false;
+                for (String effectStr : effects) {
+                    String[] parts = effectStr.split(":");
+                    if (parts.length < 3) continue;
+                    
+                    String typeName = parts[0].toLowerCase(java.util.Locale.ROOT);
+                    PotionEffectType type = PotionEffectType.getByKey(NamespacedKey.minecraft(typeName));
+                    if (type == null) {
+                        plugin.getLogger().warning("Unknown potion effect type in config: " + typeName);
+                        continue;
+                    }
+                    
+                    int amplifier = Integer.parseInt(parts[1]);
+                    int duration = (int) (Integer.parseInt(parts[2]) * 20 * durationMultiplier);
+                    
+                    if (duration > 0) {
+                        player.addPotionEffect(new PotionEffect(type, duration, amplifier));
+                        appliedAny = true;
+                    }
+                }
+                if (appliedAny) {
+                    String msg = "§e⌐ " + materialName + " — §7Drawing deep...";
+                    animator.reveal(player, msg, null);
+                }
+            } else {
+                plugin.getLogger().info("No smoking effects found for path: " + path);
+            }
+
+            if (material == CropType.TOBACCO) {
+                String cureType = getTobaccoCureType(lit);
+                if ("light".equals(cureType)) {
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SPEED, 100, 0)
+                    );
+                } else if ("dark".equals(cureType)) {
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SPEED, 150, 0)
+                    );
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.CONFUSION, 60, 0)
+                    );
+                } else if ("fire".equals(cureType)) {
+                    player.addPotionEffect(
+                        new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 300, 0)
+                    );
+                }
             }
         }
 
         pipeManager.lastSmoked.put(player.getUniqueId(), now);
         pipeManager.onPipeLit(player.getUniqueId(), now);
 
-        // Update seasoned status if needed
         smokesUsed++;
         if (smokesUsed >= 3 && !isSeasoned) {
+            String matName = isTrim ? "trim" : material.name().toLowerCase();
             animator.reveal(
                 player,
-                "§e⌐ " + material.name().toLowerCase() + " — §aSeasoned!",
+                "§e⌐ " + matName + " — §aSeasoned!",
                 null
             );
-            // We update the item meta in handlePuff's durability logic
         }
     }
 
@@ -473,6 +591,50 @@ public class PipeListener implements Listener {
                 new org.bukkit.NamespacedKey("cultivar", "tobacco_cure"),
                 org.bukkit.persistence.PersistentDataType.STRING
             );
+    }
+
+    private boolean isTrimPipe(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return false;
+        String displayName = lit.getItemMeta().getDisplayName();
+        return displayName != null && displayName.contains("Trim");
+    }
+
+    private String getTrimStrainId(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return null;
+        return lit
+            .getItemMeta()
+            .getPersistentDataContainer()
+            .get(
+                new org.bukkit.NamespacedKey("cultivar", "strain_id"),
+                org.bukkit.persistence.PersistentDataType.STRING
+            );
+    }
+
+    private String getTrimStrainName(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return null;
+        return lit
+            .getItemMeta()
+            .getPersistentDataContainer()
+            .get(
+                new org.bukkit.NamespacedKey("cultivar", "strain_name"),
+                org.bukkit.persistence.PersistentDataType.STRING
+            );
+    }
+
+    private boolean isSpliffPipe(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return false;
+        return lit.getItemMeta().getPersistentDataContainer().has(
+            new org.bukkit.NamespacedKey("cultivar", "is_spliff"),
+            org.bukkit.persistence.PersistentDataType.BOOLEAN
+        );
+    }
+
+    private boolean isHerbalPipe(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return false;
+        return lit.getItemMeta().getPersistentDataContainer().has(
+            new org.bukkit.NamespacedKey("cultivar", "is_herbal"),
+            org.bukkit.persistence.PersistentDataType.BOOLEAN
+        );
     }
 
     private static class SmokeTask extends BukkitRunnable {

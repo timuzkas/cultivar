@@ -125,6 +125,10 @@ public class Database {
                 }
             }
         }
+
+        createPlayerStrainsTable();
+        createSoilTable();
+        createGrowerReputationTable();
     }
 
     public void disconnect() throws SQLException {
@@ -378,6 +382,82 @@ public class Database {
         String sql = "DELETE FROM player_strains WHERE player_uuid = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, playerUuid.toString());
+            stmt.executeUpdate();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Grower reputation
+    // -------------------------------------------------------------------------
+
+    public void createGrowerReputationTable() throws SQLException {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS grower_reputation (
+              player_uuid TEXT PRIMARY KEY,
+              player_name TEXT NOT NULL,
+              grow_score INTEGER DEFAULT 0,
+              title TEXT DEFAULT 'Apprentice'
+            );
+            """;
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    public int loadGrowScore(UUID playerUuid) throws SQLException {
+        String sql = "SELECT grow_score FROM grower_reputation WHERE player_uuid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("grow_score");
+                }
+            }
+        }
+        return 0;
+    }
+
+    public String loadGrowerTitle(UUID playerUuid) throws SQLException {
+        String sql = "SELECT title FROM grower_reputation WHERE player_uuid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("title");
+                }
+            }
+        }
+        return "Apprentice";
+    }
+
+    public void saveGrowerReputation(UUID playerUuid, String playerName, int score, String title) throws SQLException {
+        String sql = """
+            INSERT OR REPLACE INTO grower_reputation (player_uuid, player_name, grow_score, title)
+            VALUES (?, ?, ?, ?)
+            """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUuid.toString());
+            stmt.setString(2, playerName);
+            stmt.setInt(3, score);
+            stmt.setString(4, title);
+            stmt.executeUpdate();
+        }
+    }
+
+    public void updateGrowScore(UUID playerUuid, int score) throws SQLException {
+        String sql = "UPDATE grower_reputation SET grow_score = ? WHERE player_uuid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, score);
+            stmt.setString(2, playerUuid.toString());
+            stmt.executeUpdate();
+        }
+    }
+
+    public void updateGrowTitle(UUID playerUuid, String title) throws SQLException {
+        String sql = "UPDATE grower_reputation SET title = ? WHERE player_uuid = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, title);
+            stmt.setString(2, playerUuid.toString());
             stmt.executeUpdate();
         }
     }

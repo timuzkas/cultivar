@@ -1,5 +1,6 @@
 package com.timuzkas.cultivar;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -101,6 +102,18 @@ public class ItemFactory {
         "cultivar",
         "strain_name"
     );
+    private static final NamespacedKey CANNABIS_TRIM = new NamespacedKey(
+        "cultivar",
+        "cannabis_trim"
+    );
+    private static final NamespacedKey ORIGINAL_BREEDER = new NamespacedKey(
+        "cultivar",
+        "original_breeder"
+    );
+    private static final NamespacedKey ORIGINAL_BREEDER_NAME = new NamespacedKey(
+        "cultivar",
+        "original_breeder_name"
+    );
     private static final NamespacedKey TEA_QUALITY = new NamespacedKey(
         "cultivar",
         "tea_quality"
@@ -137,22 +150,80 @@ public class ItemFactory {
         "cultivar",
         "harvest_basket"
     );
+    private static final NamespacedKey AIR_CURED_LEAF = new NamespacedKey(
+        "cultivar",
+        "air_cured_leaf"
+    );
+    private static final NamespacedKey RACK_DRIED_TEA = new NamespacedKey(
+        "cultivar",
+        "rack_dried_tea"
+    );
+    private static final NamespacedKey SPLIFF = new NamespacedKey(
+        "cultivar",
+        "spliff"
+    );
+    private static final NamespacedKey HERBAL_FILL = new NamespacedKey(
+        "cultivar",
+        "herbal_fill"
+    );
+    private static final NamespacedKey SPICED_TEA_LEAF = new NamespacedKey(
+        "cultivar",
+        "spiced_tea_leaf"
+    );
+    private static final NamespacedKey SEED_QUALITY = new NamespacedKey(
+        "cultivar",
+        "seed_quality"
+    );
 
     public static ItemStack createCannabisSeed() {
-        return createCannabisSeed(null, null);
+        return createCannabisSeed(null, null, null, null, 0.0f);
     }
 
     public static ItemStack createCannabisSeed(
         String strainId,
         String strainName
     ) {
+        return createCannabisSeed(strainId, strainName, null, null, 0.0f);
+    }
+
+    public static ItemStack createCannabisSeed(
+        String strainId,
+        String strainName,
+        String breederUuid,
+        String breederName
+    ) {
+        return createCannabisSeed(strainId, strainName, breederUuid, breederName, 0.0f);
+    }
+
+    public static ItemStack createCannabisSeed(
+        String strainId,
+        String strainName,
+        String breederUuid,
+        String breederName,
+        float seedQuality
+    ) {
         ItemStack item = new ItemStack(Material.WHEAT_SEEDS, 1);
         ItemMeta meta = item.getItemMeta();
-        String displayName =
-            strainName != null
-                ? "§2Cannabis Seed §7[" + strainName + "]"
-                : "§2Cannabis Seed";
+        String displayName;
+        List<String> lore = new ArrayList<>();
+        
+        if (strainName != null) {
+            displayName = "§2Cannabis Seed §7[" + strainName + "]";
+            if (breederName != null) {
+                lore.add("§8Grown by §7" + breederName);
+            }
+            if (seedQuality > 0) {
+                String qualityStr = seedQuality >= 0.10f ? "§6Master" : "§eQuality";
+                lore.add("§8Seed: " + qualityStr);
+            }
+        } else {
+            displayName = "§2Cannabis Seed";
+        }
+        
         meta.setDisplayName(displayName);
+        if (!lore.isEmpty()) {
+            meta.setLore(lore);
+        }
         meta
             .getPersistentDataContainer()
             .set(CANNABIS_SEED, PersistentDataType.BOOLEAN, true);
@@ -165,6 +236,21 @@ public class ItemFactory {
             meta
                 .getPersistentDataContainer()
                 .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        if (breederUuid != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER, PersistentDataType.STRING, breederUuid);
+        }
+        if (breederName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER_NAME, PersistentDataType.STRING, breederName);
+        }
+        if (seedQuality > 0) {
+            meta
+                .getPersistentDataContainer()
+                .set(SEED_QUALITY, PersistentDataType.FLOAT, seedQuality);
         }
         item.setItemMeta(meta);
         return item;
@@ -203,6 +289,34 @@ public class ItemFactory {
         return item;
     }
 
+    public static ItemStack createCannabisTrim() {
+        return createCannabisTrim(null, null);
+    }
+
+    public static ItemStack createCannabisTrim(String strainId, String strainName) {
+        ItemStack item = new ItemStack(Material.KELP, 1);
+        ItemMeta meta = item.getItemMeta();
+        String displayName = strainName != null
+            ? "§2Cannabis Trim §7[" + strainName + "]"
+            : "§2Cannabis Trim";
+        meta.setDisplayName(displayName);
+        meta
+            .getPersistentDataContainer()
+            .set(CANNABIS_TRIM, PersistentDataType.BOOLEAN, true);
+        if (strainId != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
     public static ItemStack createWetTobaccoLeaf() {
         ItemStack item = new ItemStack(Material.DEAD_BUSH, 1);
         ItemMeta meta = item.getItemMeta();
@@ -223,6 +337,51 @@ public class ItemFactory {
             .set(DRY_LEAF, PersistentDataType.BOOLEAN, true);
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static ItemStack createAirCuredLeaf() {
+        ItemStack item = new ItemStack(Material.DEAD_BUSH, 1);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§fAir-cured Leaf");
+        meta.setLore(java.util.List.of("§7Slow-dried, smooth"));
+        meta
+            .getPersistentDataContainer()
+            .set(AIR_CURED_LEAF, PersistentDataType.BOOLEAN, true);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isAirCuredLeaf(ItemStack item) {
+        return (
+            item != null &&
+            item.getItemMeta() != null &&
+            item
+                .getItemMeta()
+                .getPersistentDataContainer()
+                .has(AIR_CURED_LEAF, PersistentDataType.BOOLEAN)
+        );
+    }
+
+    public static ItemStack createRackDriedTeaLeaf() {
+        ItemStack item = new ItemStack(Material.DEAD_BUSH, 1);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§bRack-dried Tea Leaf");
+        meta
+            .getPersistentDataContainer()
+            .set(RACK_DRIED_TEA, PersistentDataType.BOOLEAN, true);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isRackDriedTeaLeaf(ItemStack item) {
+        return (
+            item != null &&
+            item.getItemMeta() != null &&
+            item
+                .getItemMeta()
+                .getPersistentDataContainer()
+                .has(RACK_DRIED_TEA, PersistentDataType.BOOLEAN)
+        );
     }
 
     public static ItemStack createFreshTeaLeaf() {
@@ -344,6 +503,108 @@ public class ItemFactory {
         }
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static ItemStack createSpliff(String strainId, String strainName, String cureType) {
+        ItemStack item = new ItemStack(Material.STICK, 1);
+        ItemMeta meta = item.getItemMeta();
+        String displayName = "§2Spliff";
+        if (strainName != null) {
+            displayName += " §7[" + strainName + "]";
+        }
+        if (cureType != null) {
+            displayName += " §8[" + cureType + "]";
+        }
+        meta.setDisplayName(displayName);
+        meta
+            .getPersistentDataContainer()
+            .set(SPLIFF, PersistentDataType.BOOLEAN, true);
+        if (strainId != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        if (cureType != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(new NamespacedKey("cultivar", "cure_type"), PersistentDataType.STRING, cureType);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isSpliff(ItemStack item) {
+        return (
+            item != null &&
+            item.getItemMeta() != null &&
+            item
+                .getItemMeta()
+                .getPersistentDataContainer()
+                .has(SPLIFF, PersistentDataType.BOOLEAN)
+        );
+    }
+
+    public static ItemStack createHerbalFill() {
+        ItemStack item = new ItemStack(Material.STICK, 1);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName("§dHerbal Fill");
+        meta
+            .getPersistentDataContainer()
+            .set(HERBAL_FILL, PersistentDataType.BOOLEAN, true);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isHerbalFill(ItemStack item) {
+        return (
+            item != null &&
+            item.getItemMeta() != null &&
+            item
+                .getItemMeta()
+                .getPersistentDataContainer()
+                .has(HERBAL_FILL, PersistentDataType.BOOLEAN)
+        );
+    }
+
+    public static ItemStack createSpicedTeaLeaf(String strainId, String strainName) {
+        ItemStack item = new ItemStack(Material.LARGE_FERN, 1);
+        ItemMeta meta = item.getItemMeta();
+        String displayName = "§6Spiced Tea Leaf";
+        if (strainName != null) {
+            displayName += " §7[" + strainName + "]";
+        }
+        meta.setDisplayName(displayName);
+        meta
+            .getPersistentDataContainer()
+            .set(SPICED_TEA_LEAF, PersistentDataType.BOOLEAN, true);
+        if (strainId != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static boolean isSpicedTeaLeaf(ItemStack item) {
+        return (
+            item != null &&
+            item.getItemMeta() != null &&
+            item
+                .getItemMeta()
+                .getPersistentDataContainer()
+                .has(SPICED_TEA_LEAF, PersistentDataType.BOOLEAN)
+        );
     }
 
     public static ItemStack createCupOfTea(String variant) {
@@ -487,6 +748,17 @@ public class ItemFactory {
                 .getItemMeta()
                 .getPersistentDataContainer()
                 .has(CANNABIS_BUD, PersistentDataType.BOOLEAN)
+        );
+    }
+
+    public static boolean isCannabisTrim(ItemStack item) {
+        return (
+            item != null &&
+            item.getItemMeta() != null &&
+            item
+                .getItemMeta()
+                .getPersistentDataContainer()
+                .has(CANNABIS_TRIM, PersistentDataType.BOOLEAN)
         );
     }
 
@@ -676,6 +948,40 @@ public class ItemFactory {
             .getItemMeta()
             .getPersistentDataContainer()
             .get(STRAIN_NAME, PersistentDataType.STRING);
+    }
+
+    public static String getOriginalBreeder(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) return null;
+        return item
+            .getItemMeta()
+            .getPersistentDataContainer()
+            .get(ORIGINAL_BREEDER, PersistentDataType.STRING);
+    }
+
+    public static String getOriginalBreederName(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) return null;
+        ItemMeta meta = item.getItemMeta();
+        if (meta.hasLore()) {
+            List<String> lore = meta.getLore();
+            for (String line : lore) {
+                if (line.contains("Grown by")) {
+                    return line.replace("§8Grown by §7", "").trim();
+                }
+            }
+        }
+        return item
+            .getItemMeta()
+            .getPersistentDataContainer()
+            .get(ORIGINAL_BREEDER_NAME, PersistentDataType.STRING);
+    }
+
+    public static float getSeedQuality(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) return 0.0f;
+        Float quality = item
+            .getItemMeta()
+            .getPersistentDataContainer()
+            .get(SEED_QUALITY, PersistentDataType.FLOAT);
+        return quality != null ? quality : 0.0f;
     }
 
     public static String getTeaQuality(ItemStack item) {

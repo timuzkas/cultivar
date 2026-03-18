@@ -72,6 +72,28 @@ recipes:
   blank-pipe: true
   teapot: true
   harvest-basket: false
+  trim-compost: true
+
+reputation:
+  thresholds:
+    apprentice: 0
+    cultivator: 50
+    master-grower: 200
+    botanist: 500
+  scores:
+    harvest: 2
+    prune: 1
+    strip: 1
+    mist: 1
+    harvest-other-strain: 3
+    zero-stress-harvest: 3
+    cross-breed: 10
+    perfect-steep: 2
+
+blends:
+  spliff-duration-multiplier: 0.7
+  herbal-night-vision-seconds: 120
+  spiced-regen-amplifier: 1
 
 loot:
   inject-dungeon: true

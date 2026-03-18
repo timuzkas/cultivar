@@ -29,6 +29,9 @@ public class CropRecord {
     public boolean coldBiome = false;
     public long lastStressCheck = 0;
     public java.util.List<String> history = new java.util.ArrayList<>();
+    public UUID originalBreederUuid = null;
+    public String originalBreederName = null;
+    public float seedQualityBonus = 0.0f;
 
     public CropRecord() {}
 
@@ -44,6 +47,10 @@ public class CropRecord {
         if (strainId != null) {
             StrainProfile strain = StrainProfile.generate(strainId);
             speedMult = strain.speedMultiplier;
+        }
+        
+        if (seedQualityBonus > 0) {
+            speedMult += seedQualityBonus;
         }
         
         double coldMultiplier = coldBiome ? 1.3 : 1.0;

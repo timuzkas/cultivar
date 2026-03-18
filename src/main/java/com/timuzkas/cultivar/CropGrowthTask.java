@@ -10,6 +10,7 @@ public class CropGrowthTask extends BukkitRunnable {
     private final CropManager cropManager;
     private final Plugin plugin;
     private SoilManager soilManager;
+    private GrowerManager growerManager;
 
     public CropGrowthTask(CropManager cropManager, Plugin plugin) {
         this.cropManager = cropManager;
@@ -18,6 +19,10 @@ public class CropGrowthTask extends BukkitRunnable {
 
     public void setSoilManager(SoilManager soilManager) {
         this.soilManager = soilManager;
+    }
+
+    public void setGrowerManager(GrowerManager growerManager) {
+        this.growerManager = growerManager;
     }
 
     @Override
@@ -206,7 +211,15 @@ public class CropGrowthTask extends BukkitRunnable {
         }
 
         crop.stress += stress;
-        if (crop.stress >= 5) {
+        int dyingThreshold = 5;
+        if (crop.strainId != null) {
+            StrainProfile strain = StrainProfile.generate(crop.strainId);
+            dyingThreshold += strain.stressResistance;
+        }
+        if (growerManager != null) {
+            dyingThreshold += growerManager.getStressBonus(crop.ownerUuid);
+        }
+        if (crop.stress >= dyingThreshold) {
             crop.flags.add(CropFlag.DYING);
         }
         if (stress > 0) crop.dirty = true;

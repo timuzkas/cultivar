@@ -22,6 +22,7 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
     private final org.bukkit.plugin.Plugin plugin;
     private PlayerStrainManager strainManager;
     private SoilManager soilManager;
+    private GrowerManager growerManager;
 
     public void setStrainManager(PlayerStrainManager strainManager) {
         this.strainManager = strainManager;
@@ -29,6 +30,10 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
 
     public void setSoilManager(SoilManager soilManager) {
         this.soilManager = soilManager;
+    }
+
+    public void setGrowerManager(GrowerManager growerManager) {
+        this.growerManager = growerManager;
     }
 
     public CultivarCommand(
@@ -54,50 +59,60 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            // List crops
+            if (growerManager != null) {
+                int score = growerManager.getScore(player.getUniqueId());
+                String title = growerManager.getTitle(player.getUniqueId());
+                player.sendMessage("§2§lCultivar Profile");
+                player.sendMessage(
+                    " §8» §7Rank: §6" +
+                        title +
+                        " §8(§7Score: §f" +
+                        score +
+                        "§8)"
+                );
+                player.sendMessage("");
+            }
+
             List<CropRecord> crops = cropManager
                 .getAll()
                 .stream()
                 .filter(c -> c.ownerUuid.equals(player.getUniqueId()))
                 .collect(Collectors.toList());
             if (crops.isEmpty()) {
-                animator.reveal(player, "§7No active crops", null);
+                player.sendMessage(" §8» §7No active crops discovered.");
             } else {
+                player.sendMessage("§2§lYour Crops");
                 for (CropRecord crop : crops) {
                     String flags = crop.flags.isEmpty()
                         ? ""
-                        : " [" +
+                        : " §8[§7" +
                           crop.flags
                               .stream()
                               .map(Enum::name)
                               .collect(Collectors.joining(", ")) +
-                          "]";
-                    animator.reveal(
-                        player,
-                        "§a" +
+                          "§8]";
+                    player.sendMessage(
+                        " §8• §a" +
                             crop.type.name().toLowerCase() +
-                            " at " +
+                            " §8at §7" +
                             crop.location.getBlockX() +
-                            "," +
+                            "§8,§7" +
                             crop.location.getBlockZ() +
-                            " stage " +
+                            " §8stage §f" +
                             crop.stage +
-                            flags,
-                        null
+                            flags
                     );
                 }
             }
             return true;
         }
-
         switch (args[0].toLowerCase()) {
             case "inspect" -> {
-                // Look at crop
                 CropRecord crop = cropManager.getByLocation(
                     player.getTargetBlockExact(5).getLocation()
                 );
                 if (crop == null) {
-                    animator.reveal(player, "§cNot looking at a crop", null);
+                    player.sendMessage("§8» §cNot looking at a crop.");
                 } else {
                     long now = System.currentTimeMillis();
                     long stageTime = crop.getStageTimeMs(plugin.getConfig(), 0);
@@ -127,7 +142,7 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         case CANNABIS -> 10;
                         case TOBACCO -> crop.flags.contains(CropFlag.LOW_LIGHT)
                             ? 0
-                            : 12; // Allow low if flagged
+                            : 12;
                         case TEA -> 7;
                         case MUSHROOM -> 0;
                     };
@@ -141,36 +156,38 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                     String lightStr = "§eLight: " + light;
                     String readyStr = (timeToAdvance <= 0) ? " §a[Ready]" : "";
 
-                    String status =
-                        "§a" +
-                        crop.type.name().toLowerCase() +
-                        " stage " +
-                        crop.stage +
-                        " stress " +
-                        crop.stress +
-                        " [" +
-                        wateredStr +
-                        "§a] " +
-                        lightStr +
-                        readyStr;
+                    player.sendMessage(
+                        "§2§l" +
+                            crop.type.name() +
+                            " §8(Stage " +
+                            crop.stage +
+                            ")"
+                    );
+                    player.sendMessage(
+                        " §8• §7Status: " +
+                            wateredStr +
+                            " §8| " +
+                            lightStr +
+                            readyStr
+                    );
+                    player.sendMessage(" §8• §7Stress: §f" + crop.stress);
 
-                    // Show specific blockers if ready but not advancing
                     if (timeToAdvance <= 0) {
-                        if (!isWatered) {
-                            status += " §cNeeds Water";
-                        }
-                        if (!lightOk) {
-                            status += " §cLow Light";
-                        }
-                        if (crop.flags.contains(CropFlag.DYING)) {
-                            status += " §cDying";
-                        }
+                        if (!isWatered) player.sendMessage(
+                            " §8» §eNeeds Water"
+                        );
+                        if (!lightOk) player.sendMessage(
+                            " §8» §eLight Level Incorrect"
+                        );
+                        if (
+                            crop.flags.contains(CropFlag.DYING)
+                        ) player.sendMessage(" §8» §cDying");
                         if (
                             crop.type == CropType.CANNABIS &&
                             (crop.stage == 3 || crop.stage == 4) &&
                             crop.flags.contains(CropFlag.NEEDS_PRUNING)
                         ) {
-                            status += " §cPaused: Pruning Needed";
+                            player.sendMessage(" §8» §eNeeds Pruning");
                         }
                         if (
                             crop.type == CropType.TOBACCO &&
@@ -179,47 +196,48 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                                 crop.stage == 5) &&
                             crop.flags.contains(CropFlag.NEEDS_STRIPPING)
                         ) {
-                            status += " §cPaused: Stripping Needed";
+                            player.sendMessage(" §8» §eNeeds Stripping");
                         }
                         if (
                             crop.type == CropType.TEA &&
                             crop.flags.contains(CropFlag.NEEDS_MISTING)
                         ) {
-                            status += " §cPaused: Misting Needed";
+                            player.sendMessage(" §8» §eNeeds Misting");
                         }
                     }
 
                     if (!crop.flags.isEmpty()) {
-                        status +=
-                            " flags: " +
-                            crop.flags
-                                .stream()
-                                .map(Enum::name)
-                                .collect(Collectors.joining(", "));
+                        player.sendMessage(
+                            " §8• §7Flags: §8" +
+                                crop.flags
+                                    .stream()
+                                    .map(Enum::name)
+                                    .collect(Collectors.joining(", "))
+                        );
                     }
                     if (timeToAdvance > 0) {
-                        status +=
-                            " next advance in " + (timeToAdvance / 1000) + "s";
+                        player.sendMessage(
+                            " §8• §7Advance in: §f" +
+                                (timeToAdvance / 1000) +
+                                "s"
+                        );
                     }
-                    animator.instant(player, status);
                 }
             }
             case "give" -> {
                 if (!player.hasPermission("cultivar.admin")) {
-                    animator.reveal(player, "§cNo permission", null);
+                    player.sendMessage("§8» §cInsufficient permission.");
                     return true;
                 }
                 if (args.length < 3) {
-                    animator.reveal(
-                        player,
-                        "§cUsage: /cv give <player> <item> [amount]",
-                        null
+                    player.sendMessage(
+                        "§8» §cUsage: /cv give <player> <item> [amount]"
                     );
                     return true;
                 }
                 Player target = Bukkit.getPlayer(args[1]);
                 if (target == null) {
-                    animator.reveal(player, "§cPlayer not found", null);
+                    player.sendMessage("§8» §cPlayer not found.");
                     return true;
                 }
                 int amount =
@@ -263,65 +281,65 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         if (itemArg.startsWith("fire_cured_leaf")) {
                             yield createCuredLeaf("fire");
                         }
+                        if (itemArg.startsWith("tea_bottle:")) {
+                            String variant = itemArg.substring(11);
+                            yield ItemFactory.createCupOfTea(variant);
+                        }
                         yield null;
                     }
                 };
                 if (item == null) {
-                    animator.reveal(player, "§cInvalid item", null);
+                    player.sendMessage("§8» §cInvalid item specified.");
                 } else {
                     item.setAmount(amount);
                     target.getInventory().addItem(item);
-                    animator.reveal(
-                        player,
-                        "§aGiven " +
+                    player.sendMessage(
+                        "§8» §7Gave §a" +
                             amount +
-                            " " +
+                            "x " +
                             args[2] +
-                            " to " +
-                            target.getName(),
-                        null
+                            " §7to §f" +
+                            target.getName()
                     );
                 }
             }
             case "remove" -> {
                 if (!player.hasPermission("cultivar.admin")) {
-                    animator.reveal(player, "§cNo permission", null);
+                    player.sendMessage("§8» §cInsufficient permission.");
                     return true;
                 }
                 CropRecord crop = cropManager.getByLocation(
                     player.getTargetBlockExact(5).getLocation()
                 );
                 if (crop == null) {
-                    animator.reveal(player, "§cNot looking at a crop", null);
+                    player.sendMessage("§8» §cNot looking at a crop.");
                 } else {
                     try {
                         revertBlock(crop);
                         cropManager.remove(crop.location);
-                        animator.reveal(player, "§aCrop removed", null);
+                        player.sendMessage("§8» §aCrop removed successfully.");
                     } catch (Exception e) {
                         e.printStackTrace();
-                        animator.reveal(player, "§cError removing crop", null);
+                        player.sendMessage("§8» §cError while removing crop.");
                     }
                 }
             }
             case "reload" -> {
                 if (!player.hasPermission("cultivar.admin")) {
-                    animator.reveal(player, "§cNo permission", null);
+                    player.sendMessage("§8» §cInsufficient permission.");
                     return true;
                 }
                 plugin.reloadConfig();
-                animator.reveal(player, "§aConfig reloaded", null);
+                player.sendMessage("§8» §aConfiguration reloaded.");
             }
             case "force" -> {
                 if (!player.hasPermission("cultivar.admin")) {
-                    animator.reveal(player, "§cNo permission", null);
+                    player.sendMessage("§8» §cInsufficient permission.");
                     return true;
                 }
                 if (args.length < 3) {
-                    animator.reveal(
-                        player,
-                        "§cUsage: /cv force <stage|stress|flag|advance|strain|cure|steep|mushroom> <value>",
-                        null
+                    player.sendMessage(
+                        "§8» §cUsage: /cv force <stage|stress|flag|advance|strain|cure|steep|mushroom> <value>"
                     );
                     return true;
                 }
@@ -333,29 +351,19 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                 switch (sub) {
                     case "strain" -> {
                         if (targetBlock == null) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a block",
-                                null
-                            );
+                            player.sendMessage("§8» §cTarget block null.");
                             return true;
                         }
                         CropRecord crop = cropManager.getByLocation(
                             targetBlock.getLocation()
                         );
                         if (crop == null) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a crop",
-                                null
-                            );
+                            player.sendMessage("§8» §cNot looking at a crop.");
                             return true;
                         }
                         if (crop.type != CropType.CANNABIS) {
-                            animator.reveal(
-                                player,
-                                "§cOnly cannabis has strains",
-                                null
+                            player.sendMessage(
+                                "§8» §cOnly Cannabis supports strains."
                             );
                             return true;
                         }
@@ -364,14 +372,12 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                             args[2] + "_force"
                         ).name;
                         crop.dirty = true;
-                        animator.reveal(
-                            player,
-                            "§aSet strain to " +
+                        player.sendMessage(
+                            "§8» §7Strain updated: §a" +
                                 crop.strainName +
-                                " (§7" +
+                                " §8(§7" +
                                 crop.strainId +
-                                "§a)",
-                            null
+                                "§8)"
                         );
                     }
                     case "cure" -> {
@@ -379,19 +385,15 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                             .getInventory()
                             .getItemInMainHand();
                         if (!ItemFactory.isDryTobaccoLeaf(hand)) {
-                            animator.reveal(
-                                player,
-                                "§cNot holding dry tobacco leaf",
-                                null
+                            player.sendMessage(
+                                "§8» §cNot holding Dry Tobacco Leaf."
                             );
                             return true;
                         }
                         String cureType = args[2].toLowerCase();
                         if (!cureType.matches("light|dark|fire|generic")) {
-                            animator.reveal(
-                                player,
-                                "§cUsage: /cv force cure <light|dark|fire|generic>",
-                                null
+                            player.sendMessage(
+                                "§8» §cUse: light, dark, fire, generic"
                             );
                             return true;
                         }
@@ -413,18 +415,14 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                             meta.setDisplayName(displayName);
                             hand.setItemMeta(meta);
                         }
-                        animator.reveal(
-                            player,
-                            "§aSet cure type to " + cureType,
-                            null
+                        player.sendMessage(
+                            "§8» §7Cure type forced: §a" + cureType
                         );
                     }
                     case "steep" -> {
                         if (args.length < 3) {
-                            animator.reveal(
-                                player,
-                                "§cUsage: /cv force steep <weak|perfect|bitter>",
-                                null
+                            player.sendMessage(
+                                "§8» §cUsage: /cv force steep <weak|perfect|bitter>"
                             );
                             return true;
                         }
@@ -434,44 +432,30 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                                 targetBlock.getType() !=
                                 Material.WATER_CAULDRON)
                         ) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a cauldron",
-                                null
+                            player.sendMessage(
+                                "§8» §cNot looking at a cauldron."
                             );
                             return true;
                         }
-                        animator.reveal(
-                            player,
-                            "§eNote: Use /cv give to create a brewed teapot, then the quality will be applied",
-                            null
+                        player.sendMessage(
+                            "§8» §eQuality applies when bottling from the teapot."
                         );
                     }
                     case "mushroom" -> {
                         if (targetBlock == null) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a block",
-                                null
-                            );
+                            player.sendMessage("§8» §cTarget block null.");
                             return true;
                         }
                         CropRecord crop = cropManager.getByLocation(
                             targetBlock.getLocation()
                         );
                         if (crop == null) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a crop",
-                                null
-                            );
+                            player.sendMessage("§8» §cNot looking at a crop.");
                             return true;
                         }
                         if (crop.type != CropType.MUSHROOM) {
-                            animator.reveal(
-                                player,
-                                "§cOnly mushroom crops have click counters",
-                                null
+                            player.sendMessage(
+                                "§8» §cOnly Mushrooms track click count."
                             );
                             return true;
                         }
@@ -479,37 +463,25 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         if (clickCount > 3) {
                             crop.stress += 1;
                             crop.flags.add(CropFlag.STUNTED);
-                            animator.reveal(
-                                player,
-                                "§cMushroom stressed! (>3 clicks)",
-                                null
+                            player.sendMessage(
+                                "§8» §cMushroom stressed by over-interaction."
                             );
                         }
                         crop.dirty = true;
-                        animator.reveal(
-                            player,
-                            "§aSet mushroom click count to " + clickCount,
-                            null
+                        player.sendMessage(
+                            "§8» §7Click counter set to: §f" + clickCount
                         );
                     }
                     default -> {
                         if (targetBlock == null) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a block",
-                                null
-                            );
+                            player.sendMessage("§8» §cTarget block null.");
                             return true;
                         }
                         CropRecord crop = cropManager.getByLocation(
                             targetBlock.getLocation()
                         );
                         if (crop == null) {
-                            animator.reveal(
-                                player,
-                                "§cNot looking at a crop",
-                                null
-                            );
+                            player.sendMessage("§8» §cNot looking at a crop.");
                             return true;
                         }
                         String val = args[2];
@@ -523,20 +495,16 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                                 crop.location
                                     .getBlock()
                                     .setType(crop.type.getVisualBlock(stage));
-                                animator.reveal(
-                                    player,
-                                    "§aForced stage to " + stage,
-                                    null
+                                player.sendMessage(
+                                    "§8» §7Stage forced: §a" + stage
                                 );
                             }
                             case "stress" -> {
                                 int stress = Integer.parseInt(val);
                                 crop.stress = stress;
                                 crop.dirty = true;
-                                animator.reveal(
-                                    player,
-                                    "§aForced stress to " + stress,
-                                    null
+                                player.sendMessage(
+                                    "§8» §7Stress forced: §a" + stress
                                 );
                             }
                             case "flag" -> {
@@ -546,41 +514,29 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                                     );
                                     if (crop.flags.contains(flag)) {
                                         crop.flags.remove(flag);
-                                        animator.reveal(
-                                            player,
-                                            "§aRemoved flag " + flag,
-                                            null
+                                        player.sendMessage(
+                                            "§8» §7Flag removed: §f" + flag
                                         );
                                     } else {
                                         crop.flags.add(flag);
-                                        animator.reveal(
-                                            player,
-                                            "§aAdded flag " + flag,
-                                            null
+                                        player.sendMessage(
+                                            "§8» §7Flag added: §a" + flag
                                         );
                                     }
                                     crop.dirty = true;
                                 } catch (IllegalArgumentException e) {
-                                    animator.reveal(
-                                        player,
-                                        "§cInvalid flag",
-                                        null
-                                    );
+                                    player.sendMessage("§8» §cUnknown flag.");
                                 }
                             }
                             case "advance" -> {
                                 crop.stageAdvancedAt = 0;
                                 crop.dirty = true;
-                                animator.reveal(
-                                    player,
-                                    "§aReset advancement timer",
-                                    null
+                                player.sendMessage(
+                                    "§8» §7Advancement timer reset."
                                 );
                             }
-                            default -> animator.reveal(
-                                player,
-                                "§cUnknown force parameter",
-                                null
+                            default -> player.sendMessage(
+                                "§8» §cUnknown parameter."
                             );
                         }
                     }
@@ -588,7 +544,7 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
             }
             case "clear" -> {
                 if (!player.hasPermission("cultivar.admin")) {
-                    animator.reveal(player, "§cNo permission", null);
+                    player.sendMessage("§8» §cInsufficient permission.");
                     return true;
                 }
                 int radius = args.length > 1 ? Integer.parseInt(args[1]) : 5;
@@ -609,52 +565,48 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         e.printStackTrace();
                     }
                 }
-                animator.reveal(
-                    player,
-                    "§aCleared " +
+                player.sendMessage(
+                    "§8» §7Cleared §a" +
                         toRemove.size() +
-                        " crops in radius " +
-                        radius,
-                    null
+                        " §7crops within radius §f" +
+                        radius +
+                        "§7."
                 );
             }
             case "strains" -> {
                 if (args.length > 1 && args[1].equalsIgnoreCase("list")) {
                     if (!player.hasPermission("cultivar.admin")) {
-                        animator.reveal(player, "§cNo permission", null);
+                        player.sendMessage("§8» §cInsufficient permission.");
                         return true;
                     }
                     Set<String> knownStrains =
                         strainManager.getAllKnownStrains();
                     if (knownStrains.isEmpty()) {
-                        animator.reveal(
-                            player,
-                            "§7No strains discovered yet",
-                            null
+                        player.sendMessage(
+                            "§8» §7No global strains discovered."
                         );
                     } else {
+                        player.sendMessage("§6§lDiscovered Strains §8(Global)");
                         for (String strainId : knownStrains) {
                             StrainProfile strain = StrainProfile.generate(
                                 strainId + "_known"
                             );
-                            animator.reveal(
-                                player,
-                                "§6" +
+                            player.sendMessage(
+                                " §8• §a" +
                                     strain.name +
-                                    " §7(ID: " +
+                                    " §8(§7" +
                                     strainId +
-                                    ") - yield:" +
+                                    "§8) §f" +
                                     String.format(
-                                        "%.1f",
+                                        "%.0f%%",
                                         strain.yieldBonus * 100
                                     ) +
-                                    "% speed:" +
+                                    " Yield §8| §f" +
                                     String.format(
-                                        "%.0f",
+                                        "%.0f%%",
                                         strain.speedMultiplier * 100
                                     ) +
-                                    "%",
-                                null
+                                    " Speed"
                             );
                         }
                     }
@@ -662,27 +614,25 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                 }
                 if (args.length > 1 && args[1].equalsIgnoreCase("reset")) {
                     if (!player.hasPermission("cultivar.admin")) {
-                        animator.reveal(player, "§cNo permission", null);
+                        player.sendMessage("§8» §cInsufficient permission.");
                         return true;
                     }
                     if (args.length < 3) {
-                        animator.reveal(
-                            player,
-                            "§cUsage: /cv strains reset <player>",
-                            null
+                        player.sendMessage(
+                            "§8» §cUsage: /cv strains reset <player>"
                         );
                         return true;
                     }
                     Player target = Bukkit.getPlayer(args[2]);
                     if (target == null) {
-                        animator.reveal(player, "§cPlayer not found", null);
+                        player.sendMessage("§8» §cPlayer not found.");
                         return true;
                     }
                     strainManager.clearPlayerStrains(target.getUniqueId());
-                    animator.reveal(
-                        player,
-                        "§aCleared strains for " + target.getName(),
-                        null
+                    player.sendMessage(
+                        "§8» §7Cleared strain data for §a" +
+                            target.getName() +
+                            "§7."
                     );
                     return true;
                 }
@@ -690,17 +640,11 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                     player.getUniqueId()
                 );
                 if (discovered.isEmpty()) {
-                    animator.reveal(
-                        player,
-                        "§7You haven't discovered any strains yet",
-                        null
+                    player.sendMessage(
+                        "§8» §7No strains discovered in your journal."
                     );
                 } else {
-                    animator.reveal(
-                        player,
-                        "§6=== Your Discovered Strains ===",
-                        null
-                    );
+                    player.sendMessage("§2§lYour Strains");
                     for (String strainId : discovered) {
                         StrainProfile strain = StrainProfile.generate(
                             strainId + "_display"
@@ -711,52 +655,96 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         if (strain.stressResistance > 0) bonuses +=
                             "Resilient ";
                         if (bonuses.equals("§7")) bonuses = "§7Balanced";
-                        animator.reveal(
-                            player,
-                            "§a" + strain.name + " - " + bonuses,
-                            null
+                        player.sendMessage(
+                            " §8• §a" + strain.name + " §8- " + bonuses
                         );
                     }
                 }
             }
             case "journal" -> {
-                CropRecord crop = cropManager.getByLocation(
-                    player.getTargetBlockExact(5).getLocation()
-                );
-                if (crop == null) {
-                    animator.reveal(player, "§cNot looking at a crop", null);
+                if (strainManager == null) {
+                    animator.reveal(
+                        player,
+                        "§cStrain manager not available",
+                        null
+                    );
                     return true;
                 }
-                String info =
-                    "§6=== Crop Info ===\n" +
-                    "§aType: " +
-                    crop.type.name() +
-                    "\n" +
-                    "§aStage: " +
-                    crop.stage +
-                    "/" +
-                    crop.type.getMaxStage() +
-                    "\n" +
-                    "§aStress: " +
-                    crop.stress;
-                if (crop.strainName != null) {
-                    info += "\n§aStrain: " + crop.strainName;
-                    strainManager.addDiscoveredStrain(
-                        player.getUniqueId(),
-                        crop.strainId
+                strainManager.loadPlayerStrains(player.getUniqueId());
+                Set<String> discovered = strainManager.getDiscoveredStrains(
+                    player.getUniqueId()
+                );
+                if (discovered.isEmpty()) {
+                    animator.reveal(
+                        player,
+                        "§7No strains discovered yet",
+                        null
                     );
+                    return true;
                 }
-                if (!crop.flags.isEmpty()) {
-                    info +=
-                        "\n§cFlags: " +
-                        crop.flags
-                            .stream()
-                            .map(Enum::name)
-                            .collect(Collectors.joining(", "));
+
+                org.bukkit.inventory.ItemStack book =
+                    new org.bukkit.inventory.ItemStack(
+                        org.bukkit.Material.WRITTEN_BOOK
+                    );
+                org.bukkit.inventory.meta.BookMeta meta =
+                    (org.bukkit.inventory.meta.BookMeta) book.getItemMeta();
+                if (meta == null) {
+                    animator.reveal(player, "§cError creating journal", null);
+                    return true;
                 }
-                for (String line : info.split("\n")) {
-                    animator.reveal(player, line, null);
+
+                meta.setTitle("Strain Journal");
+                meta.setAuthor("Cultivar");
+
+                List<String> pages = new ArrayList<>();
+
+                StringBuilder page1 = new StringBuilder();
+                page1.append("§6=== Strain Journal ===\n\n");
+                page1
+                    .append("§7Discovered: ")
+                    .append(discovered.size())
+                    .append("\n\n");
+                page1.append(
+                    "§8Use §a/cv journal§8 to view your discovered strains."
+                );
+                pages.add(page1.toString());
+
+                for (String strainId : discovered) {
+                    StrainProfile strain = StrainProfile.generate(strainId);
+
+                    StringBuilder page = new StringBuilder();
+                    page.append("§6").append(strain.name).append("\n");
+                    page
+                        .append("§7Potency: ")
+                        .append(strain.potency)
+                        .append("\n");
+
+                    int yieldPct = (int) Math.round(strain.yieldBonus * 100);
+                    int speedPct = (int) Math.round(
+                        strain.speedMultiplier * 100
+                    );
+                    page
+                        .append("§eYield: +")
+                        .append(yieldPct)
+                        .append("%  §bSpeed: ")
+                        .append(speedPct)
+                        .append("%\n");
+                    page
+                        .append("§2Resilience: ")
+                        .append(strain.stressResistance)
+                        .append("\n\n");
+
+                    String flavor = getStrainFlavorLine(strain);
+                    page.append("§8\"").append(flavor).append("\"");
+
+                    pages.add(page.toString());
                 }
+
+                meta.setPages(pages);
+                book.setItemMeta(meta);
+
+                player.openBook(book);
             }
             case "soil" -> {
                 if (soilManager == null) {
@@ -816,15 +804,13 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                             targetBlock.getLocation(),
                             level
                         );
-                        animator.reveal(
-                            player,
-                            "§aSet enrichment to " + level,
-                            null
+                        player.sendMessage(
+                            "§8» §7Soil enrichment set to: §a" + level
                         );
                     }
                     case "clear" -> {
                         soilManager.setEnrichment(targetBlock.getLocation(), 0);
-                        animator.reveal(player, "§aCleared enrichment", null);
+                        player.sendMessage("§8» §aSoil enrichment cleared.");
                     }
                     default -> animator.reveal(
                         player,
@@ -862,6 +848,18 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private String getStrainFlavorLine(StrainProfile strain) {
+        return switch (strain.potency) {
+            case "High Yield" -> "A generous plant, grown in patience.";
+            case "Fast" -> "Quick to grow, light on the tongue.";
+            case "Resilient" -> "Sturdy and steadfast through any weather.";
+            case "Premium" -> "A rare find, worth the wait.";
+            case "Elite" -> "The pinnacle of cultivation.";
+            case "Balanced" -> "A well-rounded choice for any occasion.";
+            default -> "An intriguing specimen with unique character.";
+        };
     }
 
     @Override
@@ -948,7 +946,10 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         "cannabis_seed:strain123",
                         "light_cured_leaf",
                         "dark_cured_leaf",
-                        "fire_cured_leaf"
+                        "fire_cured_leaf",
+                        "tea_bottle:green",
+                        "tea_bottle:black",
+                        "tea_bottle:herbal"
                     );
                 }
                 case "force" -> {
