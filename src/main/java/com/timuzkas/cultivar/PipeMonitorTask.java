@@ -18,7 +18,7 @@ public class PipeMonitorTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        long timeout = plugin.getConfig().getLong("smoking.pipe-timeout-minutes", 5) * 60000;
+        long timeout = plugin.getConfig().getLong("cultivar.smoking.pipe-timeout-minutes", 5) * 60000;
         long now = System.currentTimeMillis();
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {

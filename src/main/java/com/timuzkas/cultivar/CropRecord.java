@@ -27,6 +27,7 @@ public class CropRecord {
     public String strainName = null;
     public long lastRainedAt = 0;
     public boolean coldBiome = false;
+    public long lastStressCheck = 0;
     public java.util.List<String> history = new java.util.ArrayList<>();
 
     public CropRecord() {}
@@ -41,7 +42,7 @@ public class CropRecord {
         
         float speedMult = 1.0f;
         if (strainId != null) {
-            StrainProfile strain = StrainProfile.generate(id);
+            StrainProfile strain = StrainProfile.generate(strainId);
             speedMult = strain.speedMultiplier;
         }
         

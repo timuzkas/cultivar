@@ -6,4 +6,4 @@ commands:
   cultivar:
     description: Manage crops
     aliases: [cv]
-    usage: /<command> [inspect|give|remove|reload]
+    usage: /<command> [inspect|give|remove|reload|force|clear|strains|journal|soil]

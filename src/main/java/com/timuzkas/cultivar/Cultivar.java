@@ -12,6 +12,7 @@ public class Cultivar extends JavaPlugin {
     private RecipeRegistry recipeRegistry;
     private SoilManager soilManager;
     private PlayerStrainManager playerStrainManager;
+    private HarvestBasketManager basketManager;
 
     @Override
     public void onEnable() {
@@ -57,6 +58,7 @@ public class Cultivar extends JavaPlugin {
         pipeManager = new PipeManager();
         teaBrewManager = new TeaBrewManager();
         recipeRegistry = new RecipeRegistry(this);
+        basketManager = new HarvestBasketManager(this, animator);
 
         // Register listeners
         getServer()
@@ -68,6 +70,7 @@ public class Cultivar extends JavaPlugin {
         CropInteractListener cropInteractListener = new CropInteractListener(cropManager, animator, this);
         cropInteractListener.setSoilManager(soilManager);
         cropInteractListener.setStrainManager(playerStrainManager);
+        cropInteractListener.setBasketManager(basketManager);
         getServer()
             .getPluginManager()
             .registerEvents(cropInteractListener, this);
@@ -95,6 +98,15 @@ public class Cultivar extends JavaPlugin {
         getServer()
             .getPluginManager()
             .registerEvents(new TeaDryingListener(this, animator), this);
+        getServer()
+            .getPluginManager()
+            .registerEvents(new PlayerJoinListener(playerStrainManager), this);
+        getServer()
+            .getPluginManager()
+            .registerEvents(new FarmlandInteractListener(soilManager, animator), this);
+        getServer()
+            .getPluginManager()
+            .registerEvents(new CraftingListener(), this);
 
         // Register recipes
         recipeRegistry.register();

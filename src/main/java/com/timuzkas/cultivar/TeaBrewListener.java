@@ -531,7 +531,7 @@ public class TeaBrewListener implements Listener {
             player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0));
         }
 
-        if ("SMOKY_CHAI".equals(blend) && ItemFactory.isDryTobaccoLeaf(cup)) {
+        if ("SMOKY_CHAI".equals(blend)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 200, 0));
         }
 

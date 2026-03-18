@@ -31,4 +31,4 @@ Thumbs.db
 *.log
 
 # Local config
-config.yml
+# config.yml

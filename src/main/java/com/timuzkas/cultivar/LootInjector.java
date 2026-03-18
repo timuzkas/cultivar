@@ -52,8 +52,9 @@ public class LootInjector implements Listener {
 
     private ItemStack getRandomSeed() {
         double r = random.nextDouble();
-        if (r < 0.4) return ItemFactory.createCannabisSeed();
-        else if (r < 0.7) return ItemFactory.createTobaccoSeed();
-        else return ItemFactory.createTeaSeed();
+        if (r < 0.35) return ItemFactory.createCannabisSeed();
+        else if (r < 0.6) return ItemFactory.createTobaccoSeed();
+        else if (r < 0.8) return ItemFactory.createTeaSeed();
+        else return ItemFactory.createSporeItem();
     }
 }

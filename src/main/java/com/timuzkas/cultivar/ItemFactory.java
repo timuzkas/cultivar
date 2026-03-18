@@ -316,7 +316,7 @@ public class ItemFactory {
         PipeTier tier,
         int smokesUsed
     ) {
-        ItemStack item = new ItemStack(Material.PAPER, 1);
+        ItemStack item = new ItemStack(Material.STICK, 1);
         ItemMeta meta = item.getItemMeta();
         String seasonedStr = smokesUsed >= 3 ? " §o(seasoned)" : "";
         meta.setDisplayName(
@@ -787,15 +787,15 @@ public class ItemFactory {
     }
 
     public static ItemStack createHarvestBasket() {
-        ItemStack item = new ItemStack(Material.BARREL, 1);
+        ItemStack item = new ItemStack(Material.RABBIT_HIDE, 1);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§6Harvest Basket");
         meta.setLore(
             java.util.List.of(
-                "§7Right-click to store harvests",
+                "§7Right-click crop to store harvests",
                 "§7Right-click air to dump contents"
             )
         );
+        meta.setDisplayName("§6Harvest Basket");
         meta
             .getPersistentDataContainer()
             .set(HARVEST_BASKET, PersistentDataType.BOOLEAN, true);

@@ -72,7 +72,7 @@ public class CropPlaceListener implements Listener {
             if (type == CropType.CANNABIS) {
                 if (strainId == null) {
                     StrainProfile strain = StrainProfile.generate(record.id);
-                    record.strainId = strain.getId();
+                    record.strainId = strain.strainId;
                     record.strainName = strain.name;
                 } else {
                     record.strainId = strainId;

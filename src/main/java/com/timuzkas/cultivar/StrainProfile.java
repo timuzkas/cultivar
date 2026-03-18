@@ -4,12 +4,14 @@ import java.util.Random;
 
 public class StrainProfile {
     public String name;
+    public String strainId;
     public float yieldBonus;
     public float speedMultiplier;
     public int stressResistance;
     public String potency;
 
-    public StrainProfile(String name, float yieldBonus, float speedMultiplier, int stressResistance, String potency) {
+    public StrainProfile(String strainId, String name, float yieldBonus, float speedMultiplier, int stressResistance, String potency) {
+        this.strainId = strainId;
         this.name = name;
         this.yieldBonus = yieldBonus;
         this.speedMultiplier = speedMultiplier;
@@ -28,8 +30,8 @@ public class StrainProfile {
         "Classic", "Special", "Premium", "Select", "Elite", "Prime"
     };
 
-    public static StrainProfile generate(String cropId) {
-        int hash = cropId.hashCode();
+    public static StrainProfile generate(String seed) {
+        int hash = seed.hashCode();
         Random random = new Random(hash);
 
         String name = PREFIXES[random.nextInt(PREFIXES.length)] + " " +
@@ -64,10 +66,7 @@ public class StrainProfile {
             potency = "Elite";
         }
 
-        return new StrainProfile(name, yieldBonus, speedMultiplier, stressResistance, potency);
-    }
-
-    public String getId() {
-        return name.replace(" ", "_").replace("#", "");
+        String strainId = seed;
+        return new StrainProfile(strainId, name, yieldBonus, speedMultiplier, stressResistance, potency);
     }
 }

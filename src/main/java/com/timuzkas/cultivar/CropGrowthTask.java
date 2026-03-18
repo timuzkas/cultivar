@@ -172,6 +172,13 @@ public class CropGrowthTask extends BukkitRunnable {
     }
 
     private void evaluateStress(CropRecord crop) {
+        long now = System.currentTimeMillis();
+        long stressCooldown = plugin.getConfig().getLong("cultivar.stress-evaluation-cooldown-minutes", 5) * 60000;
+        if (now - crop.lastStressCheck < stressCooldown) {
+            return;
+        }
+        crop.lastStressCheck = now;
+
         int stress = 0;
 
         // Light stress for cannabis

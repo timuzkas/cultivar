@@ -6,7 +6,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -28,12 +30,18 @@ public class ActionBarAnimator {
     public void idle(Player player, String message) {
         cancelTask(player);
         IdleTask task = new IdleTask(player, message);
-        activeTasks.put(player.getUniqueId(), task.runTaskTimer(plugin, 0, 10)); // blink every 10 ticks
+        activeTasks.put(player.getUniqueId(), task.runTaskTimer(plugin, 0, 10));
     }
 
     public void instant(Player player, String message) {
         cancelTask(player);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(message));
+    }
+
+    public void sequence(Player player, List<String> lines, int ticksPerLine) {
+        cancelTask(player);
+        SequenceTask task = new SequenceTask(player, lines, ticksPerLine);
+        activeTasks.put(player.getUniqueId(), task.runTaskTimer(plugin, 0, 1));
     }
 
     public void clear(Player player) {
@@ -100,6 +108,34 @@ public class ActionBarAnimator {
             String display = message + (blink ? "§7▌" : "");
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(display));
             blink = !blink;
+        }
+    }
+
+    private static class SequenceTask extends BukkitRunnable {
+        private final Player player;
+        private final List<String> lines;
+        private final int ticksPerLine;
+        private int currentLine = 0;
+        private int ticksOnLine = 0;
+
+        public SequenceTask(Player player, List<String> lines, int ticksPerLine) {
+            this.player = player;
+            this.lines = lines;
+            this.ticksPerLine = ticksPerLine;
+        }
+
+        @Override
+        public void run() {
+            if (currentLine >= lines.size()) {
+                cancel();
+                return;
+            }
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(lines.get(currentLine)));
+            ticksOnLine++;
+            if (ticksOnLine >= ticksPerLine) {
+                currentLine++;
+                ticksOnLine = 0;
+            }
         }
     }
 }
