@@ -39,7 +39,7 @@ Crafted from:
 ### Harvesting
 
 Break the mature plant. Yield depends on stress and watering consistency.
-Harvested as **Cannabis Bud** and **Cannabis Trim**.
+Harvested as **Cannabis Bud** and **Cannabis Trim**. Buds can be [fermented](mechanics#fermentation--aging) for higher potency.
 
 ---
 
@@ -75,7 +75,7 @@ Crafted from:
 
 ### Harvesting
 
-Harvest by breaking the mature plant. Produces **Wet Tobacco Leaves**.
+Harvest by breaking the mature plant. Produces **Wet Tobacco Leaves**. These can be [cured](mechanics#tobacco-curing) or [dried](mechanics#drying-rack) before use.
 
 ---
 
@@ -109,7 +109,7 @@ Crafted from:
 
 ### Harvesting
 
-Harvest by breaking. Produces **Fresh Tea Leaves**.
+Harvest by breaking. Produces **Fresh Tea Leaves**. These can be used in [tea brewing](mechanics#tea-brewing) for various [beneficial effects](effects).
 
 ---
 

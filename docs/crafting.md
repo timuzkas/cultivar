@@ -113,7 +113,7 @@ The drying rack is not a craftable item. To create one:
    - Wet Tobacco becomes **Air-cured Leaf**.
    - Fresh Tea becomes **Rack-dried Tea Leaf**.
 
-See [Mechanics: Drying Rack](/mechanics#watering-system) for more environmental details.
+See [Mechanics: Drying Rack](mechanics#drying-rack) for more environmental details.
 
 ---
 
@@ -133,7 +133,7 @@ Crafted from:
 2. Collect the brew with an **Empty Teapot**.
 3. Timing determines the tea quality (Weak, Perfect, or Bitter).
 
-See [Mechanics: Tea Brewing](/mechanics#tea-brewing) for the full guide on setup and quality levels.
+See [Mechanics: Tea Brewing](mechanics#tea-brewing) for the full guide on setup and quality levels.
 
 ---
 
@@ -141,7 +141,7 @@ See [Mechanics: Tea Brewing](/mechanics#tea-brewing) for the full guide on setup
 
 High-quality cannabis and tobacco can be produced through slow fermentation in darkness.
 
-See [Mechanics: Fermentation](/mechanics#fermentation--aging) for requirements and how to avoid disturbing the process.
+See [Mechanics: Fermentation](mechanics#fermentation--aging) for requirements and how to avoid disturbing the process.
 
 ---
 
@@ -149,7 +149,7 @@ See [Mechanics: Fermentation](/mechanics#fermentation--aging) for requirements a
 
 Smelting **Wet Tobacco Leaves** in a furnace with specific fuels creates different cured varieties.
 
-See [Mechanics: Tobacco Curing](/mechanics#tobacco-curing) for the fuel-to-cure-type reference table.
+See [Mechanics: Tobacco Curing](mechanics#tobacco-curing) for the fuel-to-cure-type reference table.
 
 ---
 

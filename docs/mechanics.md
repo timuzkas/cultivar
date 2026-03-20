@@ -62,6 +62,23 @@ Each crop has a procedurally generated strain with unique properties.
 
 ---
 
+## Drying Rack
+
+Drying racks are used to process fresh leaves into dried varieties without the need for fuel.
+
+### Creation
+
+Drying racks are created by right-clicking a **Fence** with **String** while sneaking.
+
+### Drying Process
+
+- **Tobacco**: Fresh tobacco leaves placed on a rack for 15 minutes become **Air-cured Leaf**.
+- **Tea**: Fresh tea leaves become **Rack-dried Tea Leaf** after 15 minutes.
+
+Racks have 4 slots and do not require any fuel or specific environment, though they must be registered (sneaking + string) to function.
+
+---
+
 ## Fermentation & Aging
 
 Controlled aging in a dark, quiet environment enhances product quality.

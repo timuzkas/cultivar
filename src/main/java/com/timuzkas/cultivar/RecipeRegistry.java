@@ -151,5 +151,4 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
     }
-    }
 }
