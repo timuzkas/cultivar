@@ -5,227 +5,198 @@ layout: default
 
 ## Seeds
 
+All seeds can be crafted from basic Minecraft materials.
+
 ### Cannabis Seeds
 
-Obtained from dungeon chests, village chests, or wandering traders. Not craftable.
+Crafted from:
+- 1 Grass + 1 Green Dye (Shapeless)
 
 ### Tea Seeds
 
 Crafted from:
-- 1 Green Tea Leaf + 1 Wheat Seeds
+- 1 Fern + 1 Cyan Dye (Shapeless)
 
 ### Tobacco Seeds
 
 Crafted from:
-- 1 Tobacco Leaf + 1 Wheat Seeds
+- 1 Dead Bush + 1 Brown Dye (Shapeless)
+
+### Mushroom Spores
+
+Crafted from:
+- 1 Brown Mushroom + 1 Red Mushroom (Shapeless)
 
 ---
 
 ## Smoking Pipes
 
-Three pipe tiers with different durability and smoking effects.
+Three pipe tiers with different durability and smoking effects. All pipe recipes are shapeless.
 
-### Wooden Pipe
+### Wooden Pipe (Blank Pipe)
 
-- Durability: 64 uses
-- Effects duration: 30 seconds
+- Durability: 10 uses
+- Effects multiplier: 1.0x
 - Crafted from:
-  - 3 Oak Planks (top row)
-  - 1 Stick (center)
+  - 1 Stick
+  - 1 Coal
+  - 1 Iron Ingot
 
 ### Clay Pipe
 
-- Durability: 128 uses
-- Effects duration: 45 seconds
+- Durability: 6 uses
+- Effects multiplier: 1.0x
 - Crafted from:
-  - 3 Terracotta (top row)
-  - 1 Stick (center)
+  - 1 Clay Ball
+  - 1 Stick
 
 ### Meerschaum Pipe
 
-- Durability: 256 uses
-- Effects duration: 60 seconds
+- Durability: 16 uses
+- Effects multiplier: 1.1x
 - Crafted from:
-  - 3 White Terracotta (top row)
-  - 1 Blaze Rod (center)
+  - 1 Quartz
+  - 1 Stick
+  - 1 Gold Ingot
 
 ---
 
 ## Smoking Items
 
-### Cigarette
-
-- 1 Paper + 1 Tobacco Leaf
-- Effects: Speed I (30s), Saturation (5s)
+Special items created by combining ingredients in a crafting grid (shapeless).
 
 ### Spliff
 
-- 1 Paper + 1 Cannabis Bud + 1 Tobacco Leaf
-- Combines effects of cannabis and tobacco
+- 1 Cannabis Bud + 1 Tobacco Leaf (Wet or Dry)
+- Combines effects of cannabis and tobacco. If cured tobacco is used, the spliff inherits the cure type properties.
 
-### Cannabis Joint
+### Herbal Fill
 
-- 1 Paper + 2 Cannabis Buds
-- Effects: Slowness I (45s), Hunger I (30s), Night Vision (60s), Nausea (on use)
+- 1 Dried Mushroom + 1 Dried Tea Leaf
+- Used for smoking; provides distinct effects.
+
+### Spiced Tea Leaf
+
+- 1 Fresh Tea Leaf + 1 Cannabis Trim
+- A specialized ingredient for unique brews or smoking.
 
 ---
 
 ## Pipe Usage
 
-1. Hold the pipe in main hand
-2. Hold the smoking item (cannabis, tobacco, cigarette) in off hand
-3. Right-click to smoke
-4. Pipe durability decreases by 1
-5. Wait for cooldown before smoking again (configurable, default 30 seconds)
+1. Hold the pipe in main hand.
+2. Hold the smoking item (Cannabis Bud, Tobacco Leaf, Spliff, etc.) in off hand.
+3. Right-click to fill the pipe.
+4. Right-click again to smoke.
+5. Pipe durability decreases by 1 use.
+6. Cooldown applies between smokes (default 120 seconds).
 
 ---
 
 ## Drying Rack
 
-Used for drying tobacco leaves.
+Used for drying tobacco leaves and tea leaves.
 
-### Placement
+### Creation
 
-The drying rack must be placed on a wall (not floor or ceiling). It attaches to solid blocks on its sides.
-
-### Recipe
-
-```
-[Oak Planks] [Oak Planks] [Oak Planks]
-[Stick    ] [             ] [         ]
-[Stick    ] [             ] [         ]
-```
-
-Top row: 3 Oak Planks
-Middle: 1 Stick
-Bottom: 1 Stick
+The drying rack is not a craftable item. To create one:
+1. Place any **Fence** block.
+2. While **sneaking**, right-click the fence with **String**.
+3. A particle effect and message will confirm the rack is registered.
 
 ### Usage
 
-1. Place the drying rack on a wall (attach to the side of a solid block)
-2. Right-click the rack with fresh tobacco leaves
-3. The rack shows a visual indicator of drying progress
-4. Wait for drying time (configurable in config.yml)
-5. Right-click the rack to collect dried tobacco leaves
-
-Dried leaves are required for [tobacco curing](/mechanics#tobacco-curing). A single rack holds one batch at a time.
-
-### Tips
-
-- Place multiple racks for larger operations
-- Drying time can be configured per curing method
-- Hanging leaves from the rack for too long (beyond ready) does not ruin them
+1. Right-click the rack with **Wet Tobacco Leaves** or **Fresh Tea Leaves**.
+2. A single rack can hold up to **4 items** at once.
+3. Wait for the drying time (**15 minutes**).
+4. Right-click the rack with an empty hand to collect the dried items.
+   - Wet Tobacco becomes **Air-cured Leaf**.
+   - Fresh Tea becomes **Rack-dried Tea Leaf**.
+5. Sneak + Right-click with an empty hand to retrieve items before they are dry.
 
 ---
 
 ## Tea Brewing
 
-Tea brewing uses a two-part setup: a teapot and a cauldron.
+Tea brewing uses a cauldron and a heat source.
 
 ### Teapot
 
+The teapot is used to collect brewed tea from a cauldron.
 Crafted from:
-```
-[Copper Ingot] [Copper Ingot] [Copper Ingot]
-[Copper Ingot] [Iron Ingot  ] [Copper Ingot]
-[Copper Ingot] [Copper Ingot] [Copper Ingot]
-```
-
-The iron ingot forms the spout. Place the teapot on a cauldron to begin brewing.
-
-### Tea Types
-
-| Tea | Leaf Required | Brew Time | Effects |
-|-----|---------------|-----------|---------|
-| Green Tea | 1 Green Tea Leaf | 30s | Regeneration I (30s) |
-| Black Tea | 1 Black Tea Leaf | 45s | Speed I (60s), Haste I (30s) |
-| Herbal Tea | 1 Herbal Tea Leaf | 30s | Night Vision (120s), Slow Falling (60s) |
+- 1 Iron Ingot + 1 Bucket (Shapeless)
 
 ### Setup
 
-1. Place a cauldron (on a furnace for water heating)
-2. Place the teapot directly on top of the cauldron
-3. Fill the cauldron with water (use water buckets)
+1. Place a **Cauldron** (standard or water cauldron).
+2. Place a **Campfire** or **Soul Campfire** directly underneath the cauldron.
+3. Fill the cauldron with water.
 
 ### Brewing Process
 
-1. Add tea leaves to the teapot (right-click with leaves)
-2. The cauldron heats the water and brewing begins automatically
-3. Watch for the brew timer — bottling at the exact moment gives a **Perfect Steep** bonus
-4. Right-click the cauldron with a glass bottle to bottle the tea
-5. Right-click with the tea mug to consume
+1. Right-click the cauldron with **2 Tea Leaves** (Fresh or Dried).
+2. The brewing process takes **60 seconds** (default).
+3. Once complete, right-click the cauldron with an **Empty Teapot** to collect the brew.
+4. The teapot holds **4 cups** of tea.
 
-### Perfect Steep
+### Serving
 
-Bottling tea exactly when brewing completes gives:
-- +50% effect duration
-- +2 reputation points
+1. Hold the **Brewed Teapot** in your main hand.
+2. Ensure you have **Glass Bottles** in your inventory.
+3. Right-click to pour a **Cup of Tea** into a bottle.
+4. You can also right-click another player with the teapot to pour a cup directly into their inventory (requires them to have a glass bottle).
 
-### Notes
+### Quality (Steeping)
 
-- The cauldron must have water and a heat source below (furnace, lava, soul fire, etc.)
-- Multiple teapots on one cauldron each drain 1 water level
-- Bottling too early produces weak tea; too late produces bitter tea with reduced effects
-- Each teapot brews independently
+The timing of collection determines the tea quality:
+- **Weak**: Collected too early.
+- **Perfect**: Collected between 60-90 seconds (Perfect Steep bonus).
+- **Bitter**: Collected after 90 seconds (Over-steeped).
 
 ---
 
-## Fermentation Chamber
+## Fermentation & Aging
 
-Cannabis buds can be fermented for enhanced potency.
+High-quality cannabis and tobacco can be produced through slow fermentation in darkness.
 
 ### Setup
 
-1. Place a composter at ground level
-2. Fill it with fresh cannabis buds (right-click with buds)
-3. Move the composter to a dark location (see below)
-4. Wait for fermentation
+1. Place a **Chest** at **Y level < 40**.
+2. Ensure the light level at the chest is **0** (total darkness).
 
-### Requirements
+### Process
 
-- **Darkness**: The composter must be at Y < 40, or in a location with no sky access (underground room, enclosed structure)
-- **Time**: 40 minutes of real time
-
-### Fermented vs Regular
-
-| Property | Regular | Fermented |
-|----------|---------|-----------|
-| Potency | Tier I-IV | Tier II-V (+1) |
-| Yield | 100% | 80% (-20%) |
-| Effect Duration | Base | +50% |
-
-### Tips
-
-- Enclosed underground rooms work well
-- Place multiple composter-fermenters for larger batches
-- Fermentation is per-batch, not per-item — ferment entire harvests at once
-- Breaking the composter cancels fermentation and loses the batch
+1. Place **Cannabis Buds** or **Dry Tobacco Leaves** into the chest.
+2. **DO NOT OPEN** the chest for **40 minutes**. Opening the chest disturbs the environment and ruins the batch.
+3. After 40 minutes, the items will transform:
+   - Cannabis Bud -> **Fermented Bud** (enhanced potency).
+   - Dry Tobacco -> **Aged Tobacco** (richer effects).
 
 ---
 
 ## Compost
 
-Crafted from:
-- 8 Wheat + 1 Composter (shaped recipe)
+Used to enrich soil for faster growth.
+
+### Recipes (Shapeless)
+
+- 3x Bone Meal + 1 Dirt -> 2 Compost
+- 1 Cannabis Trim + 1 Dirt -> 2 Compost
 
 ### Usage
 
-1. Use compost on farmland
-2. Soil enrichment levels: 0, 1, 2, 3
-3. Higher levels speed up crop growth
-4. Enriched soil depletes over multiple harvests
+1. Right-click **Farmland** with compost to increase its enrichment level (up to level 3).
+2. Enriched soil provides a growth speed bonus (up to 1.3x).
+3. Soil level depletes by 1 after each harvest.
 
 ---
 
 ## Strain Journal
 
-Crafted from:
-- 1 Book + 1 Comparator
-
-The journal tracks discovered strain genetics. When you harvest a crop with a new strain profile, it's automatically added.
+The journal tracks discovered strain genetics.
 
 ### Usage
 
-- Right-click to open and view discovered strains
-- Strains show: Name, genetics profile, discovery date
-- Share strain information with other players
+- Use `/cv journal` to receive your personal strain journal.
+- Open it to view all discovered strains, their genetics, and origin.
+- Strains are discovered automatically upon harvesting new varieties.

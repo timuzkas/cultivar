@@ -5,151 +5,150 @@ layout: default
 
 ## Overview
 
-Each crop type has unique growth stages, care requirements, and environmental preferences. Understanding these is key to maximizing yield quality.
+Each crop type has unique growth stages, care requirements, and environmental preferences.
 
 ## Cannabis
 
-Cannabis plants grow through 5 stages over approximately 50 minutes (configurable).
+Cannabis plants grow through 4 stages over approximately 60 minutes.
 
 ### Acquisition
 
-- Crafted from seeds found in dungeon chests, village chests, or from wandering traders
-- See [Loot Tables](#loot-injection) for spawn locations
+Crafted from:
+- 1 Grass + 1 Green Dye (Shapeless)
 
 ### Growth Stages
 
 | Stage | Duration | Action Required |
 |-------|----------|-----------------|
-| Seedling | 10 min | Keep watered |
-| Vegetative | 10 min | Keep watered; midday sun causes stress |
-| Early Flower | 10 min | Prune 3-4 times per day |
-| Late Flower | 10 min | Prune 2-3 times per day |
+| Seedling | 15 min | Keep watered |
+| Vegetative | 15 min | Keep watered; midday sun (>13) causes stress |
+| Early Flower | 15 min | Prune (Right-click with Shears) |
+| Late Flower | 15 min | Prune again |
 | Harvest | - | Harvest when ready |
 
 ### Care Requirements
 
-**Pruning**: Examine the crop with `/cv inspect` to check pruning needs. Click the crop while holding shears when prompted. Plants need pruning at stages 3-4. Overdue pruning causes stress.
+**Watering**: Keep the farmland moist (Right-click with Water Bucket). Water expires after 45 minutes.
 
-**Sunlight**: Midday sun (light level 15) causes stress. Plant in shaded areas or use partial blocks above to reduce light.
+**Pruning**: At stages 3 and 4, the crop needs pruning. Right-click with shears when prompted.
 
-**Spacing**: Overcrowded crops (within 2 blocks of another cannabis plant) suffer stress penalties.
+**Light**: Requires light level 10-15. Midday sun (light > 13) causes stress. Shaded areas or partial blocks are recommended.
 
-**Watering**: Keep the farmland moist. Water expires after a configurable window.
+**Spacing**: Overcrowded crops (another cannabis plant within 1 block) suffer stress.
 
 ### Harvesting
 
-Harvest by breaking the mature plant. Yield depends on:
-- Strain genetics (yield bonus)
-- Stress accumulated during growth
-- Watering consistency
-
-Harvested as buds, which can be [fermented](/mechanics#fermentation) or smoked.
+Break the mature plant. Yield depends on stress and watering consistency.
+Harvested as **Cannabis Bud** and **Cannabis Trim**.
 
 ---
 
 ## Tobacco
 
-Tobacco plants grow through 6 stages over approximately 60 minutes.
+Tobacco plants grow through 5 stages over approximately 100 minutes.
 
 ### Acquisition
 
-- Start with cured tobacco leaves or tobacco seeds
+Crafted from:
+- 1 Dead Bush + 1 Brown Dye (Shapeless)
 
 ### Growth Stages
 
 | Stage | Duration | Action Required |
 |-------|----------|-----------------|
-| Seedling | 10 min | Keep watered |
-| Early Growth | 10 min | Strip lower leaves |
-| Mid Growth | 10 min | Keep watered |
-| Late Growth | 10 min | Strip leaves again |
-| Maturation | 10 min | Final leaf strip |
+| Seedling | 20 min | Keep watered |
+| Early Growth | 20 min | Strip lower leaves (Empty Hand) |
+| Mid Growth | 20 min | Keep watered |
+| Late Growth | 20 min | Strip leaves again |
+| Maturation | 20 min | Final leaf strip |
 | Harvest | - | Harvest leaves |
 
 ### Care Requirements
 
-**Stripping**: At stages 2 and 4, strip lower leaves by clicking the plant with an empty hand. Failure to strip causes stress.
+**Watering**: Standard watering (45-minute window).
 
-**Heat**: Nearby fire (within 3 blocks, not more than 1 block above) provides a growth speed bonus.
+**Stripping**: At stages 2, 4, and 5, strip leaves by right-clicking with an empty hand.
 
-**Watering**: Standard watering requirements apply.
+**Light**: Requires light level 12-15. Tobacco can adapt to lower light but at a slower growth rate.
+
+**Heat**: Growth speed bonus (20%) when within 4 blocks of a heat source (Fire/Lava).
 
 ### Harvesting
 
-Harvest leaves by breaking the mature plant. Leaves can be:
-- Cured using one of four curing methods
-- Dried on drying racks for basic use
-- Used to roll cigarettes
+Harvest by breaking the mature plant. Produces **Wet Tobacco Leaves**.
 
 ---
 
 ## Tea
 
-Tea plants grow through 4 stages over approximately 40 minutes.
+Tea plants grow through 3 stages over approximately 30 minutes.
 
 ### Acquisition
 
-- Tea seeds or fresh tea leaves
+Crafted from:
+- 1 Fern + 1 Cyan Dye (Shapeless)
 
 ### Growth Stages
 
 | Stage | Duration | Action Required |
 |-------|----------|-----------------|
 | Seedling | 10 min | Keep watered |
-| Early Growth | 10 min | Mist periodically |
-| Late Growth | 10 min | Mist when needed |
+| Early Growth | 10 min | Mist (Right-click with Water Bottle) |
+| Late Growth | 10 min | Mist again |
 | Harvest | - | Harvest leaves |
 
 ### Care Requirements
 
-**Misting**: Spray water on leaves periodically using a water bottle. Tea prefers humidity. Mist 3-4 times during growth.
+**Watering**: Needs water every 60 minutes.
 
-**Light**: Tea prefers partial shade (light level 7-13). Too much or too little light causes stress.
+**Misting**: Tea prefers humidity. Right-click with a water bottle every 30 minutes.
 
-**Water Source**: Growth speed bonus when planted within 2 blocks of a water source block.
+**Light**: Prefers partial shade (light level 7-13). Too much light (>13) or too little (<7) causes stress.
+
+**Water Source**: 15% growth bonus when planted within 3 blocks of a water source block.
 
 ### Harvesting
 
-Harvest fresh leaves. Use in [tea brewing](/mechanics#tea-brewing) for beverages with various effects.
+Harvest by breaking. Produces **Fresh Tea Leaves**.
 
 ---
 
 ## Mushrooms
 
-Mushrooms grow through 4 stages over approximately 30 minutes.
+Mushrooms grow through 3 stages over approximately 15 minutes.
 
 ### Acquisition
 
-- Mushroom spores from harvesting mature mushrooms
+Crafted from:
+- 1 Brown Mushroom + 1 Red Mushroom (Shapeless)
 
 ### Growth Stages
 
 | Stage | Duration | Action Required |
 |-------|----------|-----------------|
-| Spore | 8 min | Darkness required |
-| Developing | 8 min | Maintain darkness |
-| Maturing | 8 min | Keep dark |
+| Spore | 5 min | Total darkness required |
+| Developing | 5 min | Maintain darkness |
+| Maturing | 5 min | Keep dark |
 | Harvest | - | Harvest cap |
 
 ### Care Requirements
 
-**Light**: Mushrooms require darkness (light level 0-6). Any light above 6 causes stress and stops growth.
+**Light**: Mushrooms require darkness (light level 0-7). Light level > 7 causes stress.
 
-**Soil**: Must be planted on mycelium or podzol. Regular dirt or farmland does not work.
+**Soil**: Must be planted on **Mycelium** or **Podzol**.
 
-**Underground**: Best grown in caves, mineshafts, or underground farms with proper lighting隔离.
+**Watering**: Needs water every 30 minutes.
 
 ### Harvesting
 
-Break the mature mushroom cap to harvest. Mushrooms can be smoked or used as consumables.
+Break the mature mushroom to harvest. Produces **Mushroom Cap** or **Spores**.
+Mushroom caps can be dried on a drying rack to produce **Dried Mushrooms**.
 
 ---
 
 ## Loot Injection
 
-Cannabis seeds spawn in:
-- Dungeon chests (stronghold, mineshaft, desert pyramid, jungle temple)
-- Village chests (savanna and taiga villages)
+Seeds can also be found in:
+- Dungeon chests
+- Village chests
 - Wandering trader offers
-
-This ensures seeds are obtainable without commands.

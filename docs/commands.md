@@ -54,13 +54,11 @@ Manage your strain journal.
 
 ### `/cv journal`
 
-Get a physical book containing your strain journal.
+Get your personal strain journal book.
 
 ```
 /cv journal
 ```
-
-Useful for sharing strain discoveries with other players.
 
 ---
 
@@ -72,7 +70,7 @@ Check soil enrichment status.
 /cv soil get
 ```
 
-Shows the enrichment level of the farmland you're standing on.
+Shows the enrichment level of the farmland you're standing on (0-3).
 
 ---
 
@@ -90,20 +88,28 @@ Give items to players.
 /cv give <player> <item> [amount]
 ```
 
-Items:
-- `cannabis-seeds`
-- `tobacco-seeds`
-- `tea-seeds`
-- `cannabis-bud`
-- `tobacco-leaf`
-- `tea-leaf`
-- `pipe-wood`
-- `pipe-clay`
-- `pipe-meerschaum`
-- `teapot`
-- `drying-rack`
-- `strain-journal`
+Valid items:
+- `cannabis_seed`
+- `tobacco_seed`
+- `tea_seed`
+- `mushroom_seed`
+- `spore` (Mushroom spores)
+- `cannabis_bud`
+- `tea_leaf` (Fresh)
+- `dried_tea_leaf`
+- `dried_mushroom`
+- `light_cured_leaf`
+- `dark_cured_leaf`
+- `fire_cured_leaf`
 - `compost`
+- `pipe` (Wooden)
+- `clay_pipe`
+- `meerschaum_pipe`
+- `teapot`
+- `basket` (Harvest Basket)
+- `tea_bottle:green`
+- `tea_bottle:black`
+- `tea_bottle:herbal`
 
 ---
 
@@ -127,8 +133,6 @@ Reload configuration from disk.
 /cv reload
 ```
 
-Use after editing `config.yml` to apply changes without restarting.
-
 ---
 
 ### `/cv force`
@@ -140,13 +144,14 @@ Force crop properties (for debugging/admin).
 ```
 
 Properties:
-- `stage <0-6>` - Set growth stage
-- `stress <0-100>` - Set stress level
-- `watered` - Mark as watered
-- `dry` - Mark as dry
+- `stage <0-5>` - Set growth stage
+- `stress <value>` - Set stress level
 - `flag <flag-name>` - Set specific flag
-
-**Use with caution.** This bypasses normal crop mechanics.
+- `advance` - Skip current stage
+- `strain <strain-id>` - Set strain
+- `cure <light|dark|fire|generic>` - Set tobacco cure type (held item)
+- `steep <weak|perfect|bitter>` - Set tea quality (held item)
+- `mushroom <0-5>` - Mushroom-specific stage set
 
 ---
 
@@ -160,8 +165,6 @@ Clear crops in an area.
 
 - No radius: Clear all crops on the server
 - With radius: Clear crops within X blocks of your position
-
-Requires confirmation.
 
 ---
 

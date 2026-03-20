@@ -9,21 +9,16 @@ Crops require consistent watering to grow properly.
 
 ### How It Works
 
-1. When you plant a seed, farmland starts dry
-2. Right-click with water bucket on the farmland to water it
-3. Water expires after a configurable time (default: 5 minutes per stage)
-4. Re-water before expiry to maintain growth
+1. Right-click with a water bucket on the farmland to water it.
+2. Water expires after a configurable time:
+   - **Cannabis/Tobacco**: 45 minutes
+   - **Tea**: 60 minutes
+   - **Mushrooms**: 30 minutes
+3. Re-water before expiry to maintain growth. Rain also replenishes water.
 
 ### Water Expiry
 
-If a crop stage completes without water, the crop enters a "thirsty" state:
-- Growth pauses until watered
-- Extended thirst (2+ stages missed) causes stress
-- Very extended thirst kills the crop
-
-### Detection
-
-The plugin checks for water within a 1-block radius of the farmland. Water blocks persist; water in buckets does not.
+If water expires, growth pauses until re-watered or it rains. Extended neglect causes stress.
 
 ---
 
@@ -35,26 +30,20 @@ Stress accumulates from neglect and environmental factors.
 
 | Source | Crop | Effect |
 |--------|------|--------|
-| Missed watering | All | +1 stress per missed stage |
-| Midday sun | Cannabis | +1 stress per sunny period |
-| Overcrowding | Cannabis | +2 stress if within 2 blocks of another |
-| Overdue pruning | Cannabis | +1 stress per overdue prune |
-| Failed stripping | Tobacco | +2 stress per failed stage |
-| Wrong light level | Tea | +1 stress per incorrect light period |
-| Light exposure | Mushrooms | +2 stress if light > 6 |
+| Midday sun (>13) | Cannabis | +1 stress during midday |
+| Overcrowding (<1r) | Cannabis | +1 stress if too close to another |
+| Wrong light level | Tea | +1 stress per check |
+| Light exposure (>7) | Mushrooms | +1 stress per check |
+| Thundering storm | Cannabis | +1 stress to seedlings |
+| Missed care | All | Stress increases if pruning/stripping/misting is ignored |
 
 ### Stress Effects
 
-- **0-2 stress**: No yield penalty
-- **3-5 stress**: -20% yield
-- **6-10 stress**: -50% yield
-- **11+ stress**: -80% yield, possible death
+High stress slows growth and can lead to **Death**. Plants reaching a high stress threshold will die and be replaced by a wither rose.
 
 ### Reducing Stress
 
-- Harvest with zero stress for bonus reputation (+3 points)
-- Some strains have stress resistance genetics
-- Proper care prevents accumulation
+Stress can be prevented by maintaining proper environments and timely care. Some strains have **Stress Resistance** genetics.
 
 ---
 
@@ -62,111 +51,72 @@ Stress accumulates from neglect and environmental factors.
 
 Each crop has a procedurally generated strain with unique properties.
 
-### How Strains Work
+### Properties
 
-When you plant a seed, the game generates a deterministic strain based on the seed's metadata. This means the same seed always produces the same strain.
-
-### Strain Properties
-
-**Cannabis**
-- Yield Bonus: -20% to +40%
-- Speed Multiplier: 0.8x to 1.3x
-- Stress Resistance: Low, Medium, High
-- Potency Tier: I, II, III, IV
-
-**Tobacco**
-- Curability Bonus: affects curing quality
-- Leaf Yield: number of leaves per harvest
-- Aroma Profile: Mild, Standard, Rich, Bold
-
-**Tea**
-- Brew Strength: affects effect duration
-- Rarity Tag: Common, Rare, Legendary
-
-**Mushrooms**
-- Potency Level: I, II, III, IV
-- Light Tolerance: how much light before stress
-- Spore Density: affects yield
-
-### Discovering Strains
-
-Harvest crops to discover strains. New strains appear in your Strain Journal. You can share strains by giving seeds to other players.
+- **Yield Bonus**: Affects harvest quantity.
+- **Speed Multiplier**: Speeds up or slows down growth.
+- **Stress Resistance**: Increases the amount of stress a plant can handle before death.
+- **Potency/Aroma**: Higher tiers provide better effects when consumed.
+- **Light Tolerance** (Mushrooms): Allows growth in slightly brighter areas.
+- **Brew Strength** (Tea): Increases duration of tea effects.
 
 ---
 
-## Fermentation
+## Fermentation & Aging
 
-Cannabis buds can be fermented for enhanced quality.
+Controlled aging in a dark, quiet environment enhances product quality.
 
 ### Process
 
-1. Place cannabis buds in a composter
-2. Store the composter in a dark location (Y < 40, no sky access)
-3. Wait 40 minutes
-4. Collect fermented buds
+1. Place **Cannabis Buds** or **Dry Tobacco** into a **Chest**.
+2. The chest must be located below **Y level 40**.
+3. The light level must be **0**.
+4. Wait for **40 minutes**.
 
-### Fermented vs Regular
+### Restrictions
 
-| Property | Regular | Fermented |
-|----------|---------|-----------|
-| Base potency | Potency Tier | +1 Tier |
-| Yield | Strain-based | -20% |
-| Effects | Standard | Enhanced duration |
+**DO NOT OPEN** the chest during fermentation. Opening it disturbs the environment and ruins the process.
 
 ---
 
 ## Tobacco Curing
 
-Cured tobacco produces higher quality leaves with better effects.
+Tobacco curing is achieved through furnace smelting with specific fuel types.
 
 ### Curing Methods
 
-**Light-Cured**
-- Dried leaves in sunlight for 20 minutes
-- Mild flavor, standard effects
+| Fuel | Cure Type |
+|------|-----------|
+| **Oak Log** | Light-cured |
+| **Jungle Log** | Dark-cured |
+| **Soul Sand** | Fire-cured |
+| Any Other | Regular Dry Tobacco |
 
-**Dark-Cured**
-- Dried leaves in darkness for 40 minutes
-- Rich flavor, enhanced effects
-
-**Fire-Cured**
-- Dried leaves near fire (3+ blocks away) for 30 minutes
-- Bold aroma, +20% saturation in cigarettes
-
-**Air-Cured**
-- Dried leaves in open air for 60 minutes
-- Maximum leaf preservation, +10% yield
-
-**Aged**
-- Any cured leaf + 20 minutes
-- All stats improved by 10%
-
-### Curing Process
-
-1. Dry leaves on drying rack
-2. Place dried leaves in composter
-3. Apply curing method (light, fire proximity, darkness, open air)
-4. Wait for cure time
-5. Collect cured leaves
+Smelting **Wet Tobacco Leaves** with these fuels produces the corresponding cured leaf.
 
 ---
 
 ## Tea Brewing
 
-See the [Crafting](/crafting) page for tea types and recipes.
+Tea is brewed in a cauldron and collected with a teapot.
 
-### Perfect Steep Bonus
+### Setup
 
-Bottling tea at the exact moment it's ready gives:
-- +50% effect duration
-- +2 reputation points
+1. Fill a cauldron with water.
+2. Place a **Campfire** or **Soul Campfire** directly underneath.
+3. Add **2 Tea Leaves** to start the brew.
 
-### Brewing in Bulk
+### Brewing Time & Quality
 
-Place multiple teapots on a cauldron. Each teapot:
-- Requires its own tea leaves
-- Has independent brew timers
-- Drains 1 water level from cauldron per teapot
+- **Weak**: Bottled before 60 seconds.
+- **Perfect**: Bottled between 60 and 90 seconds.
+- **Bitter**: Bottled after 90 seconds.
+
+### Blending
+
+Adding ingredients to your off-hand while starting the brew can create blends:
+- **Sweet Berries**: Adds a regeneration bonus.
+- **Sugar**: Smoother flavor.
 
 ---
 
@@ -188,21 +138,11 @@ Track your cultivation progress through four ranks.
 | Action | Points |
 |--------|--------|
 | Harvest any crop | +2 |
-| Prune cannabis | +1 |
-| Strip tobacco leaves | +1 |
-| Mist tea leaves | +1 |
-| Cross-breed strains | +10 |
+| Prune/Strip/Mist | +1 |
+| Perfect steep (Tea) | +2 |
 | Zero-stress harvest | +3 |
-| Perfect steep (tea) | +2 |
 | Harvest new strain | +3 |
-| Craft pipe | +1 |
-
-### Rank Benefits
-
-Higher ranks unlock:
-- Potential for new seed varieties (future feature)
-- Reduced cooldowns on smoking
-- Access to special recipes
+| Cross-breed strains | +10 |
 
 ---
 
@@ -212,32 +152,19 @@ Improve farmland productivity with compost.
 
 ### Levels
 
-| Level | Growth Speed Bonus |
-|-------|-------------------|
-| 0 | 1.0x (baseline) |
-| 1 | 1.1x |
-| 2 | 1.2x |
-| 3 | 1.3x |
+- **Level 0**: 1.0x speed (standard)
+- **Level 1**: 1.1x speed
+- **Level 2**: 1.2x speed
+- **Level 3**: 1.3x speed
 
-### Depletion
-
-Each level depletes by 0.1 per harvest. Level 3 farmland becomes level 2 after one harvest, eventually depleting to level 0.
-
-### Commands
-
-- `/cv soil get` - Check soil enrichment level
-- `/cv soil set <level>` - Set enrichment level (admin)
-- `/cv soil clear` - Reset to level 0
+Soil level decreases by 1 after each harvest. Check level with `/cv soil get`.
 
 ---
 
 ## Proximity Notifications
 
-When you stand near your crops, the plugin shows:
-
-- Current growth stage
-- Water status (time until expiry)
-- Pending care actions (prune, strip, mist)
-- Current stress level
-
-This helps you manage multiple crops without checking each one individually.
+When you are within 4 blocks of your crops, you will see a status update (ActionBar) showing:
+- Growth stage and time remaining.
+- Water status.
+- Pending care actions.
+- Stress level.
