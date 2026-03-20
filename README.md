@@ -19,8 +19,12 @@ JAR output: `target/cultivar-1.0.0-SNAPSHOT.jar`
 3. Configure `plugins/Cultivar/config.yml`
 4. Grant `cultivar.use` permission to players
 
+## Downloads
+
+Modrinth: https://modrinth.com/plugin/cultivar
+
 ## Docs
 
-Wiki: https://github.com/timuzkas/cultivar/tree/master/docs
+https://timuzkas.github.io/cultivar/
 
 License: MIT
