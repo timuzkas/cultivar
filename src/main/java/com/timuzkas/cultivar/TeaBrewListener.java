@@ -51,7 +51,6 @@ public class TeaBrewListener implements Listener {
         ItemStack item = event.getItem();
         Block block = event.getClickedBlock();
 
-        // Add leaves to cauldron
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             block != null &&
@@ -70,7 +69,6 @@ public class TeaBrewListener implements Listener {
             return;
         }
 
-        // Collect with teapot
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             block != null &&
@@ -83,7 +81,6 @@ public class TeaBrewListener implements Listener {
             return;
         }
 
-        // Check brewing status
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             block != null &&
@@ -98,7 +95,6 @@ public class TeaBrewListener implements Listener {
             }
         }
 
-        // Pour cup
         if (
             (event.getAction() == Action.RIGHT_CLICK_BLOCK ||
                 event.getAction() == Action.RIGHT_CLICK_AIR) &&
@@ -110,7 +106,6 @@ public class TeaBrewListener implements Listener {
             return;
         }
 
-        // Drink cup
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK ||
             event.getAction() == Action.RIGHT_CLICK_AIR
@@ -385,8 +380,8 @@ public class TeaBrewListener implements Listener {
         TeaBrewManager.BrewSession session = teaBrewManager.activeSessions.get(
             cauldron.getLocation()
         );
-        if (session == null || !session.complete) {
-            animator.reveal(player, "§cNot ready yet", null);
+        if (session == null) {
+            animator.reveal(player, "§cNot brewing anything", null);
             return;
         }
 

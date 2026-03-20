@@ -164,11 +164,9 @@ public class CropGrowthTask extends BukkitRunnable {
         crop.stage++;
         crop.stageAdvancedAt = System.currentTimeMillis();
         crop.dirty = true;
-        // Update block
         Material newBlock = getVisualBlock(crop);
         crop.location.getBlock().setType(newBlock);
 
-        // Set flags for attention
         if (crop.type == CropType.CANNABIS && (crop.stage == 3 || crop.stage == 4)) {
             crop.flags.add(CropFlag.NEEDS_PRUNING);
         } else if (crop.type == CropType.TOBACCO && (crop.stage == 2 || crop.stage == 4 || crop.stage == 5)) {
@@ -186,7 +184,6 @@ public class CropGrowthTask extends BukkitRunnable {
 
         int stress = 0;
 
-        // Light stress for cannabis
         if (crop.type == CropType.CANNABIS) {
             long time = crop.location.getWorld().getTime();
             if (time >= 6000 && time <= 8000) { // midday
@@ -195,7 +192,6 @@ public class CropGrowthTask extends BukkitRunnable {
             }
         }
 
-        // Light stress for mushrooms (inverted - they prefer darkness)
         if (crop.type == CropType.MUSHROOM) {
             int light = crop.location.getBlock().getLightLevel();
             int lightThreshold = 7;
@@ -208,7 +204,6 @@ public class CropGrowthTask extends BukkitRunnable {
             }
         }
 
-        // Overcrowding for cannabis
         if (crop.type == CropType.CANNABIS) {
             int radius = plugin.getConfig().getInt("cultivar.cannabis.overcrowding-radius", 1);
             for (int x = -radius; x <= radius; x++) {
@@ -239,19 +234,16 @@ public class CropGrowthTask extends BukkitRunnable {
     }
 
     private void setAttentionFlags(CropRecord crop) {
-        // Tea misting
         if (crop.type == CropType.TEA) {
             long mistInterval = plugin.getConfig().getLong("cultivar.tea.mist-interval-minutes", 30) * 60000;
             if (System.currentTimeMillis() - crop.lastMisted >= mistInterval) {
                 crop.flags.add(CropFlag.NEEDS_MISTING);
                 crop.dirty = true;
             }
-            // Consecutive misses
             if (System.currentTimeMillis() - crop.lastMisted >= mistInterval * 2) {
                 crop.flags.add(CropFlag.WILTING);
             }
             if (System.currentTimeMillis() - crop.lastMisted >= mistInterval * 3) {
-                // Die
                 crop.deathReason = "Died from lack of misting";
                 crop.location.getBlock().setType(org.bukkit.Material.WITHER_ROSE);
                 try {

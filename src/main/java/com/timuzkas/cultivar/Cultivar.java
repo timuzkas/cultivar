@@ -21,7 +21,6 @@ public class Cultivar extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        // Init components
         database = new Database(this);
         try {
             database.connect();
@@ -81,7 +80,6 @@ public class Cultivar extends JavaPlugin {
         recipeRegistry = new RecipeRegistry(this);
         basketManager = new HarvestBasketManager(this, animator);
 
-        // Register listeners
         getServer()
             .getPluginManager()
             .registerEvents(new CropPlaceListener(cropManager, animator, this), this);
@@ -136,21 +134,17 @@ public class Cultivar extends JavaPlugin {
             .getPluginManager()
             .registerEvents(new FermentationListener(fermentationManager, this), this);
 
-        // Start tasks
         new FermentationTask(fermentationManager, this).runTaskTimer(this, 0, 
             getConfig().getLong("cultivar.fermentation.check-interval-ticks", 1200));
 
-        // Register recipes
         recipeRegistry.register();
 
-        // Register commands
         CultivarCommand command = new CultivarCommand(cropManager, animator, this);
         command.setStrainManager(playerStrainManager);
         command.setSoilManager(soilManager);
         command.setGrowerManager(growerManager);
         getCommand("cultivar").setExecutor(command);
 
-        // Start tasks
         CropGrowthTask growthTask = new CropGrowthTask(cropManager, this);
         growthTask.setSoilManager(soilManager);
         growthTask.setGrowerManager(growerManager);
@@ -169,7 +163,6 @@ public class Cultivar extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Save all
         try {
             if (cropManager != null) {
                 cropManager.saveAll();
@@ -181,7 +174,6 @@ public class Cultivar extends JavaPlugin {
             getLogger().severe("Failed to save on disable: " + e.getMessage());
         }
 
-        // Clear tasks
         if (animator != null) {
             animator.clearAll();
         }

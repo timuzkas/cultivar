@@ -90,9 +90,10 @@ Tobacco curing is achieved through furnace smelting with specific fuel types.
 | **Oak Log** | Light-cured |
 | **Jungle Log** | Dark-cured |
 | **Soul Sand** | Fire-cured |
-| Any Other | Regular Dry Tobacco |
+| **None (Drying Rack)** | Air-cured |
+| **Any Other** | Regular Dry Tobacco |
 
-Smelting **Wet Tobacco Leaves** with these fuels produces the corresponding cured leaf.
+Smelting **Wet Tobacco Leaves** with the logs/sand in a furnace produces cured leaves. Leaving them on a **Drying Rack** for 15 minutes produces Air-cured leaves.
 
 ---
 
@@ -108,9 +109,10 @@ Tea is brewed in a cauldron and collected with a teapot.
 
 ### Brewing Time & Quality
 
-- **Weak**: Bottled before 60 seconds.
-- **Perfect**: Bottled between 60 and 90 seconds.
-- **Bitter**: Bottled after 90 seconds.
+You can collect tea at any time after brewing starts, but timing affects the final quality:
+- **Weak**: Collected before 60 seconds.
+- **Perfect**: Collected between 60 and 90 seconds.
+- **Bitter**: Collected after 90 seconds.
 
 ### Blending
 

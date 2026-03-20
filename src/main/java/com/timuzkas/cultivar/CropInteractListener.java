@@ -117,7 +117,6 @@ public class CropInteractListener implements Listener {
         event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
         event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
 
-        // Removal (left-click twice with shears)
         if (
             event.getAction() == Action.LEFT_CLICK_BLOCK &&
             item != null &&
@@ -127,7 +126,6 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Harvest
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             item != null &&
@@ -142,7 +140,6 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Watering (all crop types)
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             item != null &&
@@ -153,7 +150,6 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Pruning for cannabis
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             item != null &&
@@ -169,7 +165,6 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Stripping for tobacco
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             item != null &&
@@ -182,13 +177,11 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Inspect (shift + right-click)
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && sneaking) {
             handleInspect(crop, player);
             return;
         }
 
-        // Crop Journal (right-click crop with book)
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             item != null &&
@@ -200,7 +193,6 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Harvest Basket (right-click with basket - air or block, with or without shift)
         if (
             (event.getAction() == Action.RIGHT_CLICK_AIR ||
                 event.getAction() == Action.RIGHT_CLICK_BLOCK) &&
@@ -211,24 +203,6 @@ public class CropInteractListener implements Listener {
             return;
         }
 
-        // Bare-hand harvest (right-click crop at harvest stage)
-        if (
-            event.getAction() == Action.RIGHT_CLICK_BLOCK &&
-            (item == null || item.getType() == Material.AIR) &&
-            !sneaking &&
-            isHarvestStage(crop)
-        ) {
-            handleHarvest(crop, player, block);
-            return;
-        }
-
-        // Inspect (shift + right-click)
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && sneaking) {
-            handleInspect(crop, player);
-            return;
-        }
-
-        // Bare-hand harvest (right-click crop at harvest stage)
         if (
             event.getAction() == Action.RIGHT_CLICK_BLOCK &&
             (item == null || item.getType() == Material.AIR) &&

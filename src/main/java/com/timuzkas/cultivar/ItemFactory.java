@@ -867,7 +867,6 @@ public class ItemFactory {
         return item;
     }
 
-    // Check methods
     public static boolean isCannabisSeed(ItemStack item) {
         return (
             item != null &&
@@ -1033,7 +1032,6 @@ public class ItemFactory {
         );
     }
 
-    // Getters
     public static CropType getPipeMaterial(ItemStack item) {
         if (item == null || item.getItemMeta() == null) return null;
         String material = item

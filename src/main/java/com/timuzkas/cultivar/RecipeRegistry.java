@@ -15,7 +15,6 @@ public class RecipeRegistry {
     }
 
     public void register() {
-        // Cannabis Seed: GRASS + GREEN_DYE → 1
         if (plugin.getConfig().getBoolean("recipes.cannabis-seed", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "cannabis_seed");
             plugin.getServer().removeRecipe(key);
@@ -28,7 +27,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Tobacco Seed: DEAD_BUSH + BROWN_DYE → 1
         if (plugin.getConfig().getBoolean("recipes.tobacco-seed", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "tobacco_seed");
             plugin.getServer().removeRecipe(key);
@@ -41,7 +39,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Tea Seed: FERN + CYAN_DYE → 1
         if (plugin.getConfig().getBoolean("recipes.tea-seed", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "tea_seed");
             plugin.getServer().removeRecipe(key);
@@ -54,7 +51,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Compost: 3x BONE_MEAL + DIRT → 2
         if (plugin.getConfig().getBoolean("recipes.compost", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "compost");
             plugin.getServer().removeRecipe(key);
@@ -67,7 +63,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Cannabis Trim Compost: CANNABIS_TRIM + DIRT → 2
         if (plugin.getConfig().getBoolean("recipes.trim-compost", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "trim_compost");
             plugin.getServer().removeRecipe(key);
@@ -82,7 +77,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Blank Pipe: STICK + COAL + IRON_INGOT → 1
         if (plugin.getConfig().getBoolean("recipes.blank-pipe", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "blank_pipe");
             plugin.getServer().removeRecipe(key);
@@ -96,7 +90,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Teapot: IRON_INGOT + BUCKET → 1
         if (plugin.getConfig().getBoolean("recipes.teapot", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "teapot");
             plugin.getServer().removeRecipe(key);
@@ -109,7 +102,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Clay Pipe: CLAY_BALL + STICK → 1
         if (plugin.getConfig().getBoolean("recipes.clay-pipe", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "clay_pipe");
             plugin.getServer().removeRecipe(key);
@@ -122,7 +114,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Meerschaum Pipe: QUARTZ + STICK + GOLD_INGOT → 1
         if (plugin.getConfig().getBoolean("recipes.meerschaum-pipe", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "meerschaum_pipe");
             plugin.getServer().removeRecipe(key);
@@ -136,7 +127,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Mushroom Spore: BROWN_MUSHROOM + RED_MUSHROOM → 1
         if (plugin.getConfig().getBoolean("recipes.mushroom-spore", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "mushroom_spore");
             plugin.getServer().removeRecipe(key);
@@ -149,7 +139,6 @@ public class RecipeRegistry {
             plugin.getServer().addRecipe(recipe);
         }
 
-        // Harvest Basket: BARREL + HOPPER → 1
         if (plugin.getConfig().getBoolean("recipes.harvest-basket", true)) {
             NamespacedKey key = new NamespacedKey(plugin, "harvest_basket");
             plugin.getServer().removeRecipe(key);
@@ -161,5 +150,6 @@ public class RecipeRegistry {
             recipe.addIngredient(Material.HOPPER);
             plugin.getServer().addRecipe(recipe);
         }
+    }
     }
 }
