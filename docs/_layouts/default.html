@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} - Cultivar</title>
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="{{ '/' | relative_url }}">Home</a>
+      <a href="{{ '/getting-started' | relative_url }}">Getting Started</a>
+      <a href="{{ '/crops' | relative_url }}">Crops</a>
+      <a href="{{ '/crafting' | relative_url }}">Crafting</a>
+      <a href="{{ '/mechanics' | relative_url }}">Mechanics</a>
+      <a href="{{ '/commands' | relative_url }}">Commands</a>
+    </nav>
+  </header>
+  <main>
+    <h1>{{ page.title }}</h1>
+    {{ content }}
+  </main>
+  <footer>
+    <p>Licensed under <a href="https://opensource.org/licenses/MIT">MIT</a></p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,13 @@
+title: Cultivar
+description: Realistic crop cultivation plugin for Minecraft 1.20.1
+theme: minima
+github:
+  repository_url: https://github.com/timuzkas/cultivar
+  public_repository: true
+show_downloads: true
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+sass:
+  style: compressed

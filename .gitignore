@@ -30,5 +30,11 @@ Thumbs.db
 # Logs
 *.log
 
+# Jekyll
+docs/_site/
+docs/.jekyll-cache/
+docs/.sass-cache/
+
 # Local config
 # config.yml
+docs/vendor/
