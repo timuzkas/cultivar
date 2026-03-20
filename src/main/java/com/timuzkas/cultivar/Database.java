@@ -340,40 +340,55 @@ public class Database {
     // -------------------------------------------------------------------------
 
     public void createPlayerStrainsTable() throws SQLException {
-        String sql = """
-            CREATE TABLE IF NOT EXISTS player_strains (
-              player_uuid TEXT NOT NULL,
-              strain_id TEXT NOT NULL,
-              PRIMARY KEY (player_uuid, strain_id)
-            );
-            """;
         try (Statement stmt = connection.createStatement()) {
+            String sql = """
+                CREATE TABLE IF NOT EXISTS player_strains (
+                  player_uuid TEXT NOT NULL,
+                  strain_id TEXT NOT NULL,
+                  crop_type TEXT NOT NULL,
+                  PRIMARY KEY (player_uuid, strain_id)
+                );
+                """;
             stmt.execute(sql);
+            
+            try {
+                stmt.execute("ALTER TABLE player_strains ADD COLUMN crop_type TEXT DEFAULT 'CANNABIS'");
+            } catch (SQLException e) {
+                // Column already exists
+            }
         }
     }
 
-    public Set<String> loadPlayerStrains(UUID playerUuid) throws SQLException {
-        Set<String> strains = new HashSet<>();
+    public Map<String, CropType> loadPlayerStrainsWithTypes(UUID playerUuid) throws SQLException {
+        Map<String, CropType> strains = new HashMap<>();
         String sql =
-            "SELECT strain_id FROM player_strains WHERE player_uuid = ?";
+            "SELECT strain_id, crop_type FROM player_strains WHERE player_uuid = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, playerUuid.toString());
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    strains.add(rs.getString("strain_id"));
+                    String strainId = rs.getString("strain_id");
+                    String cropTypeStr = rs.getString("crop_type");
+                    try {
+                        CropType type = CropType.valueOf(cropTypeStr);
+                        strains.put(strainId, type);
+                    } catch (Exception e) {
+                        strains.put(strainId, CropType.CANNABIS);
+                    }
                 }
             }
         }
         return strains;
     }
 
-    public void savePlayerStrain(UUID playerUuid, String strainId)
+    public void savePlayerStrain(UUID playerUuid, String strainId, CropType cropType)
         throws SQLException {
         String sql =
-            "INSERT OR IGNORE INTO player_strains (player_uuid, strain_id) VALUES (?, ?)";
+            "INSERT OR IGNORE INTO player_strains (player_uuid, strain_id, crop_type) VALUES (?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, playerUuid.toString());
             stmt.setString(2, strainId);
+            stmt.setString(3, cropType.name());
             stmt.executeUpdate();
         }
     }

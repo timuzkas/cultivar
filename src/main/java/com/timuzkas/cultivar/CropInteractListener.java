@@ -243,22 +243,37 @@ public class CropInteractListener implements Listener {
     private void handleHarvest(CropRecord crop, Player player, Block block) {
         if (!isHarvestStage(crop)) return;
 
-        if (
-            crop.type == CropType.CANNABIS &&
-            crop.strainId != null &&
-            strainManager != null
-        ) {
-            Set<String> discovered = strainManager.getDiscoveredStrains(
-                player.getUniqueId()
-            );
-            boolean isNew = discovered.add(crop.strainId);
+        if (strainManager != null) {
+            strainManager.loadPlayerStrains(player.getUniqueId());
+        }
+        
+        if (growerManager != null) {
+            growerManager.loadPlayer(player.getUniqueId(), player.getName());
+        }
+
+        String strainIdToSave = crop.strainId;
+        if (strainIdToSave == null) {
+            strainIdToSave = "wild_" + crop.type.name().toLowerCase();
+        }
+        
+        if (strainManager != null) {
             strainManager.addDiscoveredStrain(
                 player.getUniqueId(),
-                crop.strainId
+                strainIdToSave,
+                crop.type
             );
-            if (isNew) {
-                StrainProfile strain = StrainProfile.generate(crop.strainId);
-                animator.reveal(player, "§6✦ New Strain: " + strain.name, null);
+            
+            Set<String> discovered = strainManager.getDiscoveredStrains(player.getUniqueId());
+            if (discovered.contains(strainIdToSave)) {
+                StrainProfile strain = StrainProfile.generate(strainIdToSave, crop.type);
+                String typeName = switch (crop.type) {
+                    case CANNABIS -> "Strain";
+                    case TOBACCO -> "Varietal";
+                    case TEA -> "Cultivar";
+                    case MUSHROOM -> "Strain";
+                    default -> "Strain";
+                };
+                animator.reveal(player, "§6✦ New " + typeName + ": " + strain.name, null);
             }
         }
 
@@ -283,7 +298,15 @@ public class CropInteractListener implements Listener {
         if (growerManager != null && crop.type == CropType.CANNABIS) {
             seedQuality = growerManager.getSeedQualityBonus(player.getUniqueId());
         }
-        for (int i = 0; i < seedCount; i++) {
+        
+        int sporeBonus = 0;
+        if (crop.strainId != null && crop.type == CropType.MUSHROOM) {
+            StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.MUSHROOM);
+            sporeBonus = strain.sporeDensity - 1;
+        }
+        int totalSeeds = seedCount + sporeBonus;
+        
+        for (int i = 0; i < totalSeeds; i++) {
             ItemStack seed;
             if (crop.type == CropType.CANNABIS && crop.strainId != null) {
                 seed = ItemFactory.createCannabisSeed(
@@ -293,8 +316,12 @@ public class CropInteractListener implements Listener {
                     breederName,
                     seedQuality
                 );
-            } else if (crop.type == CropType.MUSHROOM) {
-                seed = ItemFactory.createMushroomSeed();
+            } else if (crop.type == CropType.TOBACCO && crop.strainId != null) {
+                seed = ItemFactory.createTobaccoSeed(crop.strainId, crop.strainName, breederUuid, breederName);
+            } else if (crop.type == CropType.TEA && crop.strainId != null) {
+                seed = ItemFactory.createTeaSeed(crop.strainId, crop.strainName, breederUuid, breederName);
+            } else if (crop.type == CropType.MUSHROOM && crop.strainId != null) {
+                seed = ItemFactory.createMushroomSeed(crop.strainId, crop.strainName, breederUuid, breederName);
             } else {
                 seed = switch (crop.type) {
                     case CANNABIS -> ItemFactory.createCannabisSeed();
@@ -395,22 +422,33 @@ public class CropInteractListener implements Listener {
     ) {
         if (!isHarvestStage(crop)) return;
 
-        if (
-            crop.type == CropType.CANNABIS &&
-            crop.strainId != null &&
-            strainManager != null
-        ) {
-            Set<String> discovered = strainManager.getDiscoveredStrains(
-                player.getUniqueId()
-            );
-            boolean isNew = discovered.add(crop.strainId);
+        if (strainManager != null) {
+            strainManager.loadPlayerStrains(player.getUniqueId());
+        }
+
+        String strainIdToSave = crop.strainId;
+        if (strainIdToSave == null) {
+            strainIdToSave = "wild_" + crop.type.name().toLowerCase();
+        }
+        
+        if (strainManager != null) {
             strainManager.addDiscoveredStrain(
                 player.getUniqueId(),
-                crop.strainId
+                strainIdToSave,
+                crop.type
             );
-            if (isNew) {
-                StrainProfile strain = StrainProfile.generate(crop.strainId);
-                animator.reveal(player, "§6✦ New Strain: " + strain.name, null);
+            
+            Set<String> discovered = strainManager.getDiscoveredStrains(player.getUniqueId());
+            if (discovered.contains(strainIdToSave)) {
+                StrainProfile strain = StrainProfile.generate(strainIdToSave, crop.type);
+                String typeName = switch (crop.type) {
+                    case CANNABIS -> "Strain";
+                    case TOBACCO -> "Varietal";
+                    case TEA -> "Cultivar";
+                    case MUSHROOM -> "Strain";
+                    default -> "Varietal";
+                };
+                animator.reveal(player, "§6✦ New " + typeName + ": " + strain.name, null);
             }
         }
 
@@ -424,15 +462,35 @@ public class CropInteractListener implements Listener {
         }
 
         int seedCount = 1 + (int) (Math.random() * 2);
-        for (int i = 0; i < seedCount; i++) {
+        
+        int sporeBonus = 0;
+        if (crop.strainId != null && crop.type == CropType.MUSHROOM) {
+            StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.MUSHROOM);
+            sporeBonus = strain.sporeDensity - 1;
+        }
+        int totalSeeds = seedCount + sporeBonus;
+        
+        for (int i = 0; i < totalSeeds; i++) {
             ItemStack seed;
+            String breederUuid = crop.originalBreederUuid != null ? crop.originalBreederUuid.toString() : null;
+            String breederName = crop.originalBreederName;
+            if (breederUuid == null && crop.strainId != null) {
+                breederUuid = crop.ownerUuid.toString();
+                breederName = player.getName();
+            }
+            
             if (crop.type == CropType.CANNABIS && crop.strainId != null) {
-                seed = ItemFactory.createCannabisSeed(
-                    crop.strainId,
-                    crop.strainName
-                );
-            } else if (crop.type == CropType.MUSHROOM) {
-                seed = ItemFactory.createMushroomSeed();
+                float seedQuality = 0.0f;
+                if (growerManager != null) {
+                    seedQuality = growerManager.getSeedQualityBonus(player.getUniqueId());
+                }
+                seed = ItemFactory.createCannabisSeed(crop.strainId, crop.strainName, breederUuid, breederName, seedQuality);
+            } else if (crop.type == CropType.TOBACCO && crop.strainId != null) {
+                seed = ItemFactory.createTobaccoSeed(crop.strainId, crop.strainName, breederUuid, breederName);
+            } else if (crop.type == CropType.TEA && crop.strainId != null) {
+                seed = ItemFactory.createTeaSeed(crop.strainId, crop.strainName, breederUuid, breederName);
+            } else if (crop.type == CropType.MUSHROOM && crop.strainId != null) {
+                seed = ItemFactory.createMushroomSeed(crop.strainId, crop.strainName, breederUuid, breederName);
             } else {
                 seed = switch (crop.type) {
                     case CANNABIS -> ItemFactory.createCannabisSeed();
@@ -932,7 +990,7 @@ public class CropInteractListener implements Listener {
                 yield -= 1;
             }
             if (crop.strainId != null) {
-                StrainProfile strain = StrainProfile.generate(crop.strainId);
+                StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.CANNABIS);
                 yield = (int) Math.round(yield * (1 + strain.yieldBonus));
             }
         }
@@ -940,6 +998,24 @@ public class CropInteractListener implements Listener {
         if (crop.type == CropType.TOBACCO) {
             if (crop.flags.contains(CropFlag.STUNTED)) {
                 yield -= 1;
+            }
+            if (crop.strainId != null) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.TOBACCO);
+                yield += strain.leafYieldBonus;
+            }
+        }
+
+        if (crop.type == CropType.TEA) {
+            if (crop.strainId != null) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.TEA);
+                yield = (int) Math.round(yield * (1 + strain.brewStrength));
+            }
+        }
+
+        if (crop.type == CropType.MUSHROOM) {
+            if (crop.strainId != null) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.MUSHROOM);
+                yield += strain.sporeDensity - 1;
             }
         }
 

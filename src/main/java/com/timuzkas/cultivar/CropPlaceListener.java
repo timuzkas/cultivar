@@ -43,6 +43,9 @@ public class CropPlaceListener implements Listener {
         String breederUuid = null;
         String breederName = null;
         float seedQuality = 0.0f;
+        String seedTobaccoStrain = null;
+        String seedTeaStrain = null;
+        String seedMushroomStrain = null;
 
         if (ItemFactory.isCannabisSeed(item) && isFarmland) {
             type = CropType.CANNABIS;
@@ -53,10 +56,13 @@ public class CropPlaceListener implements Listener {
             seedQuality = ItemFactory.getSeedQuality(item);
         } else if (ItemFactory.isTobaccoSeed(item) && isFarmland) {
             type = CropType.TOBACCO;
+            seedTobaccoStrain = ItemFactory.getStrainId(item);
         } else if (ItemFactory.isTeaSeed(item) && (isFarmland || isFlowerPot)) {
             type = CropType.TEA;
+            seedTeaStrain = ItemFactory.getStrainId(item);
         } else if (ItemFactory.isMushroomSeed(item) && isFarmland) {
             type = CropType.MUSHROOM;
+            seedMushroomStrain = ItemFactory.getStrainId(item);
         }
 
         if (type != null) {
@@ -77,7 +83,7 @@ public class CropPlaceListener implements Listener {
 
             if (type == CropType.CANNABIS) {
                 if (strainId == null) {
-                    StrainProfile strain = StrainProfile.generate(record.id);
+                    StrainProfile strain = StrainProfile.generate(record.id, CropType.CANNABIS);
                     record.strainId = strain.strainId;
                     record.strainName = strain.name;
                 } else {
@@ -89,6 +95,45 @@ public class CropPlaceListener implements Listener {
                     }
                     if (seedQuality > 0) {
                         record.seedQualityBonus = seedQuality;
+                    }
+                }
+            } else if (type == CropType.TOBACCO) {
+                if (seedTobaccoStrain == null) {
+                    StrainProfile strain = StrainProfile.generate(record.id, CropType.TOBACCO);
+                    record.strainId = strain.strainId;
+                    record.strainName = strain.name;
+                } else {
+                    record.strainId = seedTobaccoStrain;
+                    record.strainName = ItemFactory.getStrainName(item);
+                    if (record.strainName == null) {
+                        StrainProfile strain = StrainProfile.generate(seedTobaccoStrain, CropType.TOBACCO);
+                        record.strainName = strain.name;
+                    }
+                }
+            } else if (type == CropType.TEA) {
+                if (seedTeaStrain == null) {
+                    StrainProfile strain = StrainProfile.generate(record.id, CropType.TEA);
+                    record.strainId = strain.strainId;
+                    record.strainName = strain.name;
+                } else {
+                    record.strainId = seedTeaStrain;
+                    record.strainName = ItemFactory.getStrainName(item);
+                    if (record.strainName == null) {
+                        StrainProfile strain = StrainProfile.generate(seedTeaStrain, CropType.TEA);
+                        record.strainName = strain.name;
+                    }
+                }
+            } else if (type == CropType.MUSHROOM) {
+                if (seedMushroomStrain == null) {
+                    StrainProfile strain = StrainProfile.generate(record.id, CropType.MUSHROOM);
+                    record.strainId = strain.strainId;
+                    record.strainName = strain.name;
+                } else {
+                    record.strainId = seedMushroomStrain;
+                    record.strainName = ItemFactory.getStrainName(item);
+                    if (record.strainName == null) {
+                        StrainProfile strain = StrainProfile.generate(seedMushroomStrain, CropType.MUSHROOM);
+                        record.strainName = strain.name;
                     }
                 }
             }
@@ -109,7 +154,7 @@ public class CropPlaceListener implements Listener {
                 e.printStackTrace();
             }
 
-            String strainMsg = (type == CropType.CANNABIS && record.strainName != null) 
+            String strainMsg = record.strainName != null 
                 ? " §7(" + record.strainName + ")" : "";
             animator.reveal(player, "§2Planted " + type.name().toLowerCase() + " seed" + strainMsg, null);
         }

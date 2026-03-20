@@ -1,13 +1,12 @@
 package com.timuzkas.cultivar;
 
-import java.sql.*;
 import java.util.*;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 public class PlayerStrainManager {
     private final Database database;
     private final Map<UUID, Set<String>> playerStrains = new HashMap<>();
+    private final Map<UUID, Map<String, CropType>> playerStrainTypes = new HashMap<>();
 
     public PlayerStrainManager(Database database, Plugin plugin) {
         this.database = database;
@@ -15,8 +14,9 @@ public class PlayerStrainManager {
 
     public void loadPlayerStrains(UUID playerUuid) {
         try {
-            Set<String> strains = database.loadPlayerStrains(playerUuid);
-            playerStrains.put(playerUuid, strains);
+            Map<String, CropType> strainsWithTypes = database.loadPlayerStrainsWithTypes(playerUuid);
+            playerStrains.put(playerUuid, new HashSet<>(strainsWithTypes.keySet()));
+            playerStrainTypes.put(playerUuid, new HashMap<>(strainsWithTypes));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -26,19 +26,31 @@ public class PlayerStrainManager {
         return playerStrains.computeIfAbsent(playerUuid, k -> new HashSet<>());
     }
 
-    public void addDiscoveredStrain(UUID playerUuid, String strainId) {
+    public CropType getStrainCropType(UUID playerUuid, String strainId) {
+        Map<String, CropType> types = playerStrainTypes.get(playerUuid);
+        if (types != null && types.containsKey(strainId)) {
+            return types.get(strainId);
+        }
+        return CropType.CANNABIS;
+    }
+
+    public void addDiscoveredStrain(UUID playerUuid, String strainId, CropType cropType) {
         Set<String> strains = playerStrains.computeIfAbsent(playerUuid, k -> new HashSet<>());
         if (strains.add(strainId)) {
             try {
-                database.savePlayerStrain(playerUuid, strainId);
+                database.savePlayerStrain(playerUuid, strainId, cropType);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        
+        Map<String, CropType> types = playerStrainTypes.computeIfAbsent(playerUuid, k -> new HashMap<>());
+        types.put(strainId, cropType);
     }
 
     public void clearPlayerStrains(UUID playerUuid) {
         playerStrains.remove(playerUuid);
+        playerStrainTypes.remove(playerUuid);
         try {
             database.clearPlayerStrains(playerUuid);
         } catch (Exception e) {

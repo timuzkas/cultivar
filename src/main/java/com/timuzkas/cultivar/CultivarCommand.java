@@ -189,32 +189,8 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         ) {
                             player.sendMessage(" §8» §eNeeds Pruning");
                         }
-                        if (
-                            crop.type == CropType.TOBACCO &&
-                            (crop.stage == 2 ||
-                                crop.stage == 4 ||
-                                crop.stage == 5) &&
-                            crop.flags.contains(CropFlag.NEEDS_STRIPPING)
-                        ) {
-                            player.sendMessage(" §8» §eNeeds Stripping");
-                        }
-                        if (
-                            crop.type == CropType.TEA &&
-                            crop.flags.contains(CropFlag.NEEDS_MISTING)
-                        ) {
-                            player.sendMessage(" §8» §eNeeds Misting");
-                        }
                     }
 
-                    if (!crop.flags.isEmpty()) {
-                        player.sendMessage(
-                            " §8• §7Flags: §8" +
-                                crop.flags
-                                    .stream()
-                                    .map(Enum::name)
-                                    .collect(Collectors.joining(", "))
-                        );
-                    }
                     if (timeToAdvance > 0) {
                         player.sendMessage(
                             " §8• §7Advance in: §f" +
@@ -267,9 +243,34 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                     default -> {
                         if (itemArg.startsWith("cannabis_seed:")) {
                             String strainId = itemArg.substring(14);
+                            StrainProfile strain = StrainProfile.generate(strainId, CropType.CANNABIS);
                             yield ItemFactory.createCannabisSeed(
                                 strainId,
-                                StrainProfile.generate(strainId).name
+                                strain.name
+                            );
+                        }
+                        if (itemArg.startsWith("tobacco_seed:")) {
+                            String strainId = itemArg.substring(12);
+                            StrainProfile strain = StrainProfile.generate(strainId, CropType.TOBACCO);
+                            yield ItemFactory.createTobaccoSeed(
+                                strainId,
+                                strain.name
+                            );
+                        }
+                        if (itemArg.startsWith("tea_seed:")) {
+                            String strainId = itemArg.substring(8);
+                            StrainProfile strain = StrainProfile.generate(strainId, CropType.TEA);
+                            yield ItemFactory.createTeaSeed(
+                                strainId,
+                                strain.name
+                            );
+                        }
+                        if (itemArg.startsWith("mushroom_seed:")) {
+                            String strainId = itemArg.substring(14);
+                            StrainProfile strain = StrainProfile.generate(strainId, CropType.MUSHROOM);
+                            yield ItemFactory.createMushroomSeed(
+                                strainId,
+                                strain.name
                             );
                         }
                         if (itemArg.startsWith("light_cured_leaf")) {
@@ -579,36 +580,165 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         player.sendMessage("§8» §cInsufficient permission.");
                         return true;
                     }
-                    Set<String> knownStrains =
-                        strainManager.getAllKnownStrains();
-                    if (knownStrains.isEmpty()) {
-                        player.sendMessage(
-                            "§8» §7No global strains discovered."
-                        );
-                    } else {
-                        player.sendMessage("§6§lDiscovered Strains §8(Global)");
-                        for (String strainId : knownStrains) {
-                            StrainProfile strain = StrainProfile.generate(
-                                strainId + "_known"
-                            );
-                            player.sendMessage(
-                                " §8• §a" +
-                                    strain.name +
-                                    " §8(§7" +
-                                    strainId +
-                                    "§8) §f" +
-                                    String.format(
-                                        "%.0f%%",
-                                        strain.yieldBonus * 100
-                                    ) +
-                                    " Yield §8| §f" +
-                                    String.format(
-                                        "%.0f%%",
-                                        strain.speedMultiplier * 100
-                                    ) +
-                                    " Speed"
-                            );
+                    
+                    UUID targetUuid = player.getUniqueId();
+                    String targetName = player.getName();
+                    
+                    if (args.length > 2) {
+                        Player target = Bukkit.getPlayer(args[2]);
+                        if (target == null) {
+                            player.sendMessage("§8» §cPlayer not found.");
+                            return true;
                         }
+                        targetUuid = target.getUniqueId();
+                        targetName = target.getName();
+                    }
+                    
+                    strainManager.loadPlayerStrains(targetUuid);
+                    Set<String> knownStrains = strainManager.getDiscoveredStrains(targetUuid);
+                    
+                    if (knownStrains.isEmpty()) {
+                        player.sendMessage("§8» §7No strains in §f" + targetName + "§7's journal.");
+                    } else {
+                        player.sendMessage("§6§lStrains: §f" + targetName + " §8(" + knownStrains.size() + ")");
+                        
+                        for (String strainId : knownStrains) {
+                            CropType cropType = strainManager.getStrainCropType(targetUuid, strainId);
+                            StrainProfile strain = StrainProfile.generate(strainId, cropType);
+                            
+                            net.md_5.bungee.api.chat.TextComponent line = new net.md_5.bungee.api.chat.TextComponent(
+                                " §8• §a" + strain.name + " §8[§7" + cropType.name() + "§8] §n§9" + strainId + "§r"
+                            );
+                            line.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
+                                net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
+                                new net.md_5.bungee.api.chat.ComponentBuilder("§7Click to view: §f/cv strains info " + strainId).create()
+                            ));
+                            line.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                                net.md_5.bungee.api.chat.ClickEvent.Action.SUGGEST_COMMAND,
+                                "/cv strains info " + strainId
+                            ));
+                            
+                            player.spigot().sendMessage(line);
+                        }
+                    }
+                    return true;
+                }
+                if (args.length > 1 && args[1].equalsIgnoreCase("info")) {
+                    if (!player.hasPermission("cultivar.admin")) {
+                        player.sendMessage("§8» §cInsufficient permission.");
+                        return true;
+                    }
+                    if (args.length < 3) {
+                        player.sendMessage("§8» §cUsage: /cv strains info <strainId> [cropType]");
+                        return true;
+                    }
+                    String strainId = args[2];
+                    
+                    CropType cropType = CropType.CANNABIS;
+                    
+                    if (args.length > 3) {
+                        try {
+                            cropType = CropType.valueOf(args[3].toUpperCase());
+                        } catch (Exception e) {
+                            cropType = null;
+                        }
+                    }
+                    
+                    if (cropType == null) {
+                        cropType = strainManager.getStrainCropType(player.getUniqueId(), strainId);
+                    }
+                    
+                    StrainProfile strain = StrainProfile.generate(strainId, cropType);
+                    if (strain == null) {
+                        player.sendMessage("§8» §cStrain not found.");
+                        return true;
+                    }
+                    
+                    player.sendMessage("§6§lStrain Info: " + strain.name + " §8(§7" + strainId + "§8)");
+                    player.sendMessage(" §8• §7Crop: §f" + cropType.name());
+                    
+                    switch (strain.cropType) {
+                        case CANNABIS -> {
+                            player.sendMessage(" §8• §7Yield: §f+" + String.format("%.0f%%", strain.yieldBonus * 100));
+                            player.sendMessage(" §8• §7Speed: §f" + String.format("%.0f%%", strain.speedMultiplier * 100) + "x");
+                            player.sendMessage(" §8• §7Stress Res: §f+" + strain.stressResistance);
+                            player.sendMessage(" §8• §7Potency: §f" + strain.potency);
+                        }
+                        case TOBACCO -> {
+                            player.sendMessage(" §8• §7Curability: §f+" + String.format("%.0f%%", strain.curabilityBonus * 100));
+                            player.sendMessage(" §8• §7Leaf Yield: §f+" + strain.leafYieldBonus);
+                            player.sendMessage(" §8• §7Aroma: §f" + strain.aromaProfile);
+                        }
+                        case TEA -> {
+                            player.sendMessage(" §8• §7Brew Strength: §f+" + String.format("%.0f%%", strain.brewStrength * 100));
+                            player.sendMessage(" §8• §7Rarity: §f" + strain.rarityTag);
+                        }
+                        case MUSHROOM -> {
+                            player.sendMessage(" §8• §7Potency: §f+" + strain.potencyLevel);
+                            player.sendMessage(" §8• §7Light Tolerance: §f+" + strain.lightTolerance);
+                            player.sendMessage(" §8• §7Spore Density: §f+" + strain.sporeDensity);
+                        }
+                        default -> {}
+                    }
+                    return true;
+                }
+                if (args.length > 1 && args[1].equalsIgnoreCase("give")) {
+                    if (!player.hasPermission("cultivar.admin")) {
+                        player.sendMessage("§8» §cInsufficient permission.");
+                        return true;
+                    }
+                    if (args.length < 4) {
+                        player.sendMessage("§8» §cUsage: /cv strains give <player> <strainId> [cropType]");
+                        return true;
+                    }
+                    Player target = Bukkit.getPlayer(args[2]);
+                    if (target == null) {
+                        player.sendMessage("§8» §cPlayer not found.");
+                        return true;
+                    }
+                    String strainId = args[3];
+                    CropType cropType = CropType.CANNABIS;
+                    
+                    if (args.length > 4) {
+                        try {
+                            cropType = CropType.valueOf(args[4].toUpperCase());
+                        } catch (Exception e) {
+                            cropType = strainManager.getStrainCropType(player.getUniqueId(), strainId);
+                        }
+                    } else {
+                        cropType = strainManager.getStrainCropType(player.getUniqueId(), strainId);
+                    }
+                    
+                    StrainProfile strain = StrainProfile.generate(strainId, cropType);
+                    
+                    ItemStack seed = switch (cropType) {
+                        case CANNABIS -> ItemFactory.createCannabisSeed(strainId, strain.name);
+                        case TOBACCO -> ItemFactory.createTobaccoSeed(strainId, strain.name);
+                        case TEA -> ItemFactory.createTeaSeed(strainId, strain.name);
+                        case MUSHROOM -> ItemFactory.createMushroomSeed(strainId, strain.name);
+                        default -> ItemFactory.createCannabisSeed(strainId, strain.name);
+                    };
+                    target.getInventory().addItem(seed);
+                    player.sendMessage("§8» §7Gave strain §a" + strain.name + " §7to §f" + target.getName());
+                    return true;
+                }
+                if (args.length > 1 && args[1].equalsIgnoreCase("remove")) {
+                    if (!player.hasPermission("cultivar.admin")) {
+                        player.sendMessage("§8» §cInsufficient permission.");
+                        return true;
+                    }
+                    if (args.length < 3) {
+                        player.sendMessage("§8» §cUsage: /cv strains remove <strainId>");
+                        return true;
+                    }
+                    String strainId = args[2];
+                    strainManager.loadPlayerStrains(player.getUniqueId());
+                    Set<String> knownStrains = strainManager.getDiscoveredStrains(player.getUniqueId());
+                    if (knownStrains.contains(strainId)) {
+                        knownStrains.remove(strainId);
+                        player.sendMessage("§8» §7Removed strain §a" + strainId + " §7from your journal.");
+                    } else {
+                        player.sendMessage("§8» §cStrain not found in your journal.");
                     }
                     return true;
                 }
@@ -646,20 +776,108 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                 } else {
                     player.sendMessage("§2§lYour Strains");
                     for (String strainId : discovered) {
-                        StrainProfile strain = StrainProfile.generate(
-                            strainId + "_display"
-                        );
+                        CropType cropType = strainManager.getStrainCropType(player.getUniqueId(), strainId);
+                        StrainProfile strain = StrainProfile.generate(strainId, cropType);
                         String bonuses = "§7";
-                        if (strain.yieldBonus > 0.2) bonuses += "High Yield ";
-                        if (strain.speedMultiplier < 0.9) bonuses += "Fast ";
-                        if (strain.stressResistance > 0) bonuses +=
-                            "Resilient ";
+                        if (cropType == CropType.CANNABIS) {
+                            if (strain.yieldBonus > 0.2) bonuses += "High Yield ";
+                            if (strain.speedMultiplier < 0.9) bonuses += "Fast ";
+                            if (strain.stressResistance > 0) bonuses += "Resilient ";
+                        } else if (cropType == CropType.TOBACCO) {
+                            if (strain.curabilityBonus > 0.2) bonuses += "High Quality ";
+                            if (strain.leafYieldBonus > 0) bonuses += "+" + strain.leafYieldBonus + " Leaves ";
+                            bonuses += strain.aromaProfile + " ";
+                        } else if (cropType == CropType.TEA) {
+                            if (strain.brewStrength > 0.2) bonuses += "Strong ";
+                            bonuses += strain.rarityTag + " ";
+                        } else if (cropType == CropType.MUSHROOM) {
+                            if (strain.potencyLevel > 0) bonuses += "Potency +" + strain.potencyLevel + " ";
+                            if (strain.lightTolerance > 0) bonuses += "Light Tol +" + strain.lightTolerance + " ";
+                            bonuses += "Spores +" + strain.sporeDensity + " ";
+                        }
                         if (bonuses.equals("§7")) bonuses = "§7Balanced";
                         player.sendMessage(
-                            " §8• §a" + strain.name + " §8- " + bonuses
+                            " §8• §a" + strain.name + " §8[§7" + cropType.name() + "§8] §8- " + bonuses
                         );
                     }
                 }
+            }
+            case "rename" -> {
+                ItemStack held = player.getInventory().getItemInMainHand();
+                if (held == null || held.getType() == Material.AIR) {
+                    player.sendMessage("§8» §cHold a seed to rename.");
+                    return true;
+                }
+                
+                String strainId = ItemFactory.getStrainId(held);
+                String strainName = ItemFactory.getStrainName(held);
+                if (strainId == null) {
+                    player.sendMessage("§8» §cThis item has no strain.");
+                    return true;
+                }
+                
+                String breederUuid = ItemFactory.getOriginalBreeder(held);
+                if (breederUuid == null || !breederUuid.equals(player.getUniqueId().toString())) {
+                    player.sendMessage("§8» §cYou can only rename strains you created.");
+                    return true;
+                }
+                
+                if (args.length < 2) {
+                    player.sendMessage("§8» §cUsage: /cv rename <name>");
+                    return true;
+                }
+                
+                String newName = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
+                if (newName.length() > 30) {
+                    player.sendMessage("§8» §cName too long (max 30 characters).");
+                    return true;
+                }
+                
+                ItemMeta meta = held.getItemMeta();
+                if (meta != null) {
+                    meta.getPersistentDataContainer().set(
+                        new NamespacedKey("cultivar", "strain_name"),
+                        PersistentDataType.STRING,
+                        newName
+                    );
+                    
+                    List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+                    boolean foundName = false;
+                    for (int i = 0; i < lore.size(); i++) {
+                        if (lore.get(i).contains("[")) {
+                            lore.set(i, "§7[" + newName + "]");
+                            foundName = true;
+                            break;
+                        }
+                    }
+                    if (!foundName && strainName != null) {
+                        String oldDisplay = "[" + strainName + "]";
+                        for (int i = 0; i < lore.size(); i++) {
+                            if (lore.get(i).contains(oldDisplay)) {
+                                lore.set(i, lore.get(i).replace(oldDisplay, "[" + newName + "]"));
+                                break;
+                            }
+                        }
+                    }
+                    meta.setLore(lore);
+                    
+                    String displayName = held.getType().name().contains("SEEDS") ? "§2Cannabis Seed" : 
+                        (held.getType().name().contains("BROWN") || held.getType().name().contains("RED") ? "§dMushroom Spore" :
+                        (held.getType().name().contains("SWEET") ? "§6Tobacco Seed" : "§bTea Seed"));
+                    if (displayName.contains("Cannabis")) {
+                        meta.setDisplayName("§2Cannabis Seed §7[" + newName + "]");
+                    } else if (displayName.contains("Mushroom")) {
+                        meta.setDisplayName("§dMushroom Spore §7[" + newName + "]");
+                    } else if (displayName.contains("Tobacco")) {
+                        meta.setDisplayName("§6Tobacco Seed §7[" + newName + "]");
+                    } else {
+                        meta.setDisplayName("§bTea Seed §7[" + newName + "]");
+                    }
+                    
+                    held.setItemMeta(meta);
+                    player.sendMessage("§8» §aStrain renamed to §7" + newName + "§a!");
+                }
+                return true;
             }
             case "journal" -> {
                 if (strainManager == null) {
@@ -711,29 +929,35 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                 pages.add(page1.toString());
 
                 for (String strainId : discovered) {
-                    StrainProfile strain = StrainProfile.generate(strainId);
+                    if (strainId == null) continue;
+                    CropType cropType = strainManager.getStrainCropType(player.getUniqueId(), strainId);
+                    StrainProfile strain = StrainProfile.generate(strainId, cropType);
+                    if (strain == null) continue;
 
                     StringBuilder page = new StringBuilder();
                     page.append("§6").append(strain.name).append("\n");
-                    page
-                        .append("§7Potency: ")
-                        .append(strain.potency)
-                        .append("\n");
-
-                    int yieldPct = (int) Math.round(strain.yieldBonus * 100);
-                    int speedPct = (int) Math.round(
-                        strain.speedMultiplier * 100
-                    );
-                    page
-                        .append("§eYield: +")
-                        .append(yieldPct)
-                        .append("%  §bSpeed: ")
-                        .append(speedPct)
-                        .append("%\n");
-                    page
-                        .append("§2Resilience: ")
-                        .append(strain.stressResistance)
-                        .append("\n\n");
+                    page.append("§7Type: ").append(cropType.name()).append("\n\n");
+                    
+                    if (cropType == CropType.CANNABIS) {
+                        page.append("§7Potency: ").append(strain.potency).append("\n");
+                        int yieldPct = (int) Math.round(strain.yieldBonus * 100);
+                        int speedPct = (int) Math.round(strain.speedMultiplier * 100);
+                        page.append("§eYield: +").append(yieldPct).append("%  §bSpeed: ").append(speedPct).append("%\n");
+                        page.append("§2Resilience: ").append(strain.stressResistance).append("\n\n");
+                    } else if (cropType == CropType.TOBACCO) {
+                        int qualityPct = (int) Math.round(strain.curabilityBonus * 100);
+                        page.append("§7Quality: +").append(qualityPct).append("%\n");
+                        page.append("§7Leafs: +").append(strain.leafYieldBonus).append("\n");
+                        page.append("§7Aroma: ").append(strain.aromaProfile).append("\n\n");
+                    } else if (cropType == CropType.TEA) {
+                        int strengthPct = (int) Math.round(strain.brewStrength * 100);
+                        page.append("§7Strength: +").append(strengthPct).append("%\n");
+                        page.append("§7Rarity: ").append(strain.rarityTag).append("\n\n");
+                    } else if (cropType == CropType.MUSHROOM) {
+                        page.append("§7Potency: +").append(strain.potencyLevel).append("\n");
+                        page.append("§7Light Tol: +").append(strain.lightTolerance).append("\n");
+                        page.append("§7Spores: +").append(strain.sporeDensity).append("\n\n");
+                    }
 
                     String flavor = getStrainFlavorLine(strain);
                     page.append("§8\"").append(flavor).append("\"");
@@ -851,13 +1075,32 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
     }
 
     private String getStrainFlavorLine(StrainProfile strain) {
-        return switch (strain.potency) {
-            case "High Yield" -> "A generous plant, grown in patience.";
-            case "Fast" -> "Quick to grow, light on the tongue.";
-            case "Resilient" -> "Sturdy and steadfast through any weather.";
-            case "Premium" -> "A rare find, worth the wait.";
-            case "Elite" -> "The pinnacle of cultivation.";
-            case "Balanced" -> "A well-rounded choice for any occasion.";
+        if (strain.cropType == CropType.CANNABIS && strain.potency != null) {
+            return switch (strain.potency) {
+                case "High Yield" -> "A generous plant, grown in patience.";
+                case "Fast" -> "Quick to grow, light on the tongue.";
+                case "Resilient" -> "Sturdy and steadfast through any weather.";
+                case "Premium" -> "A rare find, worth the wait.";
+                case "Elite" -> "The pinnacle of cultivation.";
+                case "Balanced" -> "A well-rounded choice for any occasion.";
+                default -> "An intriguing specimen with unique character.";
+            };
+        }
+        return switch (strain.cropType) {
+            case TOBACCO -> switch (strain.aromaProfile) {
+                case "sweet" -> "Sweet and smooth on the inhale.";
+                case "smoky" -> "Bold and rich with depth.";
+                case "earthy" -> "Grounded and natural flavor.";
+                case "mild" -> "Gentle and easy-going.";
+                case "robust" -> "Strong character, full-bodied.";
+                default -> "A unique tobacco varietal.";
+            };
+            case TEA -> switch (strain.rarityTag) {
+                case "aged" -> "Aged to perfection, deep and complex.";
+                case "rare" -> "A rare and precious cultivar.";
+                default -> "A refreshing and calming brew.";
+            };
+            case MUSHROOM -> "Potent and earthy, nature's gift.";
             default -> "An intriguing specimen with unique character.";
         };
     }
@@ -895,7 +1138,7 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2) {
             if ("strains".equals(args[0].toLowerCase())) {
                 if (sender.hasPermission("cultivar.admin")) {
-                    return Arrays.asList("list", "reset");
+                    return Arrays.asList("list", "info", "give", "remove", "reset");
                 }
                 return empty;
             }
@@ -925,7 +1168,19 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
             }
         }
         if (args.length == 3) {
+            if ("strains".equals(args[0].toLowerCase()) && "list".equals(args[1].toLowerCase())) {
+                return Bukkit.getOnlinePlayers().stream()
+                    .map(p -> p.getName())
+                    .collect(Collectors.toList());
+            }
             if (!sender.hasPermission("cultivar.admin")) return empty;
+            if ("strains".equals(args[0].toLowerCase())) {
+                if ("info".equals(args[1].toLowerCase()) || "give".equals(args[1].toLowerCase()) || "remove".equals(args[1].toLowerCase())) {
+                    strainManager.loadPlayerStrains(((Player)sender).getUniqueId());
+                    Set<String> strains = strainManager.getDiscoveredStrains(((Player)sender).getUniqueId());
+                    return new ArrayList<>(strains);
+                }
+            }
             switch (args[0].toLowerCase()) {
                 case "give" -> {
                     return Arrays.asList(
@@ -943,7 +1198,10 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
                         "mushroom_seed",
                         "dried_mushroom",
                         "basket",
-                        "cannabis_seed:strain123",
+                        "cannabis_seed:",
+                        "tobacco_seed:",
+                        "tea_seed:",
+                        "mushroom_seed:",
                         "light_cured_leaf",
                         "dark_cured_leaf",
                         "fire_cured_leaf",
@@ -984,6 +1242,34 @@ public class CultivarCommand implements CommandExecutor, TabCompleter {
             args[1].equalsIgnoreCase("mushroom")
         ) {
             return Arrays.asList("0", "1", "2", "3", "4", "5");
+        }
+        if (args.length == 4) {
+            if (!sender.hasPermission("cultivar.admin")) return empty;
+            if ("strains".equals(args[0].toLowerCase()) && "give".equals(args[1].toLowerCase())) {
+                return Arrays.asList("CANNABIS", "TOBACCO", "TEA", "MUSHROOM");
+            }
+            if ("give".equals(args[0].toLowerCase())) {
+                if (args[2].startsWith("cannabis_seed:")) {
+                    strainManager.loadPlayerStrains(((Player)sender).getUniqueId());
+                    Set<String> strains = strainManager.getDiscoveredStrains(((Player)sender).getUniqueId());
+                    return new ArrayList<>(strains);
+                }
+                if (args[2].startsWith("tobacco_seed:")) {
+                    strainManager.loadPlayerStrains(((Player)sender).getUniqueId());
+                    Set<String> strains = strainManager.getDiscoveredStrains(((Player)sender).getUniqueId());
+                    return new ArrayList<>(strains);
+                }
+                if (args[2].startsWith("tea_seed:")) {
+                    strainManager.loadPlayerStrains(((Player)sender).getUniqueId());
+                    Set<String> strains = strainManager.getDiscoveredStrains(((Player)sender).getUniqueId());
+                    return new ArrayList<>(strains);
+                }
+                if (args[2].startsWith("mushroom_seed:")) {
+                    strainManager.loadPlayerStrains(((Player)sender).getUniqueId());
+                    Set<String> strains = strainManager.getDiscoveredStrains(((Player)sender).getUniqueId());
+                    return new ArrayList<>(strains);
+                }
+            }
         }
         return empty;
     }

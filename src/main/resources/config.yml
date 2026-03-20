@@ -1,9 +1,10 @@
 cultivar:
   disabled-worlds: []
 
+  # Crop Settings
   cannabis:
     enabled: true
-    stage-minutes: 20
+    stage-minutes: 15
     prune-window-minutes: 40
     water-expiry-minutes: 45
     dying-window-minutes: 20
@@ -12,7 +13,7 @@ cultivar:
 
   tobacco:
     enabled: true
-    stage-minutes: 25
+    stage-minutes: 20
     strip-window-minutes: 35
     water-expiry-minutes: 45
     heat-bonus-radius: 4
@@ -21,16 +22,39 @@ cultivar:
 
   tea:
     enabled: true
-    stage-minutes: 15
+    stage-minutes: 10
     mist-interval-minutes: 30
     water-expiry-minutes: 60
     water-source-bonus-radius: 3
     water-source-bonus-percent: 15
 
+  mushroom:
+    enabled: true
+    stage-minutes: 5
+    water-expiry-minutes: 30
+
+  # System Settings
+  reputation:
+    thresholds:
+      apprentice: 0
+      cultivator: 50
+      master-grower: 200
+      botanist: 500
+    scores:
+      harvest: 2
+      prune: 1
+      strip: 1
+      mist: 1
+      harvest-other-strain: 3
+      zero-stress-harvest: 3
+      cross-breed: 10
+      perfect-steep: 2
+
   tea-brewing:
     brew-seconds: 60
     leaves-required: 2
     max-cups-per-brew: 4
+    show-progress: true
     variants:
       green:
         effects: [REGENERATION:0:15, SATURATION:0:10]
@@ -57,51 +81,46 @@ cultivar:
     proximity-radius: 4
     proximity-cooldown-seconds: 180
 
-sounds:
-  enabled: true
-  volume: 0.5
+  sounds:
+    enabled: true
+    volume: 0.5
 
-animation:
-  speed-ticks: 1
+  animation:
+    speed-ticks: 1
 
-recipes:
-  cannabis-seed: true
-  tobacco-seed: true
-  tea-seed: true
-  compost: true
-  blank-pipe: true
-  teapot: true
-  harvest-basket: false
-  trim-compost: true
+  recipes:
+    cannabis-seed: true
+    tobacco-seed: true
+    tea-seed: true
+    compost: true
+    blank-pipe: true
+    teapot: true
+    harvest-basket: true
+    trim-compost: true
 
-reputation:
-  thresholds:
-    apprentice: 0
-    cultivator: 50
-    master-grower: 200
-    botanist: 500
-  scores:
-    harvest: 2
-    prune: 1
-    strip: 1
-    mist: 1
-    harvest-other-strain: 3
-    zero-stress-harvest: 3
-    cross-breed: 10
-    perfect-steep: 2
+  blends:
+    spliff-duration-multiplier: 0.7
+    herbal-night-vision-seconds: 120
+    spiced-regen-amplifier: 1
+  
+  tea-blends:
+    SWEET_BERRIES:
+      effects: [REGENERATION:0:5]
+      message: "Sweet and fruity"
+    SUGAR:
+      effects: []
+      message: "Smooth and sweet"
+    SMOKY_CHAI:
+      effects: [SPEED:0:10]
+      message: "Smoky and bold"
 
-blends:
-  spliff-duration-multiplier: 0.7
-  herbal-night-vision-seconds: 120
-  spiced-regen-amplifier: 1
+  loot:
+    inject-dungeon: true
+    inject-village: true
+    inject-wandering-trader: true
 
-fermentation:
-  duration-minutes: 40
-  min-y-level: 40
-  required-light-level: 0
-  check-interval-ticks: 1200
-
-loot:
-  inject-dungeon: true
-  inject-village: true
-  inject-wandering-trader: true
+  fermentation:
+    duration-minutes: 40
+    min-y-level: 40
+    required-light-level: 0
+    check-interval-ticks: 1200

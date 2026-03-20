@@ -265,23 +265,101 @@ public class ItemFactory {
     }
 
     public static ItemStack createTobaccoSeed() {
+        return createTobaccoSeed(null, null, null, null);
+    }
+
+    public static ItemStack createTobaccoSeed(String strainId, String strainName) {
+        return createTobaccoSeed(strainId, strainName, null, null);
+    }
+
+    public static ItemStack createTobaccoSeed(String strainId, String strainName, String breederUuid, String breederName) {
         ItemStack item = new ItemStack(Material.WHEAT_SEEDS, 1);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§6Tobacco Seed");
+        String displayName = strainName != null 
+            ? "§6Tobacco Seed §7[" + strainName + "]" 
+            : "§6Tobacco Seed";
+        List<String> lore = new ArrayList<>();
+        if (strainName != null && breederName != null) {
+            lore.add("§8Grown by §7" + breederName);
+        }
+        
+        meta.setDisplayName(displayName);
+        if (!lore.isEmpty()) {
+            meta.setLore(lore);
+        }
         meta
             .getPersistentDataContainer()
             .set(TOBACCO_SEED, PersistentDataType.BOOLEAN, true);
+        if (strainId != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        if (breederUuid != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER, PersistentDataType.STRING, breederUuid);
+        }
+        if (breederName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER_NAME, PersistentDataType.STRING, breederName);
+        }
         item.setItemMeta(meta);
         return item;
     }
 
     public static ItemStack createTeaSeed() {
+        return createTeaSeed(null, null, null, null);
+    }
+
+    public static ItemStack createTeaSeed(String strainId, String strainName) {
+        return createTeaSeed(strainId, strainName, null, null);
+    }
+
+    public static ItemStack createTeaSeed(String strainId, String strainName, String breederUuid, String breederName) {
         ItemStack item = new ItemStack(Material.WHEAT_SEEDS, 1);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§bTea Seed");
+        String displayName = strainName != null 
+            ? "§bTea Seed §7[" + strainName + "]" 
+            : "§bTea Seed";
+        List<String> lore = new ArrayList<>();
+        if (strainName != null && breederName != null) {
+            lore.add("§8Grown by §7" + breederName);
+        }
+        
+        meta.setDisplayName(displayName);
+        if (!lore.isEmpty()) {
+            meta.setLore(lore);
+        }
         meta
             .getPersistentDataContainer()
             .set(TEA_SEED, PersistentDataType.BOOLEAN, true);
+        if (strainId != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        if (breederUuid != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER, PersistentDataType.STRING, breederUuid);
+        }
+        if (breederName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER_NAME, PersistentDataType.STRING, breederName);
+        }
         item.setItemMeta(meta);
         return item;
     }
@@ -662,11 +740,16 @@ public class ItemFactory {
     }
 
     public static ItemStack createCupOfTea(String variant) {
+        return createCupOfTea(variant, null, null);
+    }
+
+    public static ItemStack createCupOfTea(String variant, String strainId, String strainName) {
         ItemStack item = new ItemStack(Material.POTION, 1);
         PotionMeta meta = (PotionMeta) item.getItemMeta();
         if (meta == null) return item;
 
-        meta.setDisplayName("§bCup of Tea §8[" + variant + "]");
+        String strainDisplay = strainName != null ? " §8[" + strainName + "]" : "";
+        meta.setDisplayName("§bCup of Tea §8[" + variant + "]" + strainDisplay);
 
         try {
             try {
@@ -705,6 +788,12 @@ public class ItemFactory {
         meta
             .getPersistentDataContainer()
             .set(TEA_VARIANT, PersistentDataType.STRING, variant);
+        if (strainId != null) {
+            meta.getPersistentDataContainer().set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta.getPersistentDataContainer().set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
 
         item.setItemMeta(meta);
         return item;
@@ -723,7 +812,7 @@ public class ItemFactory {
     }
 
     public static ItemStack createBrewedTeapot(String variant, int cups) {
-        return createBrewedTeapot(variant, cups, null, null);
+        return createBrewedTeapot(variant, cups, null, null, null, null);
     }
 
     public static ItemStack createBrewedTeapot(
@@ -732,10 +821,22 @@ public class ItemFactory {
         String quality,
         String blend
     ) {
+        return createBrewedTeapot(variant, cups, quality, blend, null, null);
+    }
+
+    public static ItemStack createBrewedTeapot(
+        String variant,
+        int cups,
+        String quality,
+        String blend,
+        String strainId,
+        String strainName
+    ) {
         ItemStack item = new ItemStack(Material.FLOWER_POT, 1);
         ItemMeta meta = item.getItemMeta();
+        String strainDisplay = strainName != null ? " §8[" + strainName + "]" : "";
         String qualityStr = quality != null ? " §8[" + quality + "]" : "";
-        meta.setDisplayName("§bTeapot §8[" + cups + "/4]" + qualityStr);
+        meta.setDisplayName("§bTeapot §8[" + cups + "/4]" + qualityStr + strainDisplay);
         meta.setLore(List.of("§7RMB to fill bottle"));
         meta
             .getPersistentDataContainer()
@@ -755,6 +856,12 @@ public class ItemFactory {
             meta
                 .getPersistentDataContainer()
                 .set(TEA_BLEND, PersistentDataType.STRING, blend);
+        }
+        if (strainId != null) {
+            meta.getPersistentDataContainer().set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta.getPersistentDataContainer().set(STRAIN_NAME, PersistentDataType.STRING, strainName);
         }
         item.setItemMeta(meta);
         return item;
@@ -1092,12 +1199,51 @@ public class ItemFactory {
     }
 
     public static ItemStack createMushroomSeed() {
+        return createMushroomSeed(null, null, null, null);
+    }
+
+    public static ItemStack createMushroomSeed(String strainId, String strainName) {
+        return createMushroomSeed(strainId, strainName, null, null);
+    }
+
+    public static ItemStack createMushroomSeed(String strainId, String strainName, String breederUuid, String breederName) {
         ItemStack item = new ItemStack(Material.BROWN_MUSHROOM, 1);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName("§dMushroom Spore");
+        String displayName = strainName != null 
+            ? "§dMushroom Spore §7[" + strainName + "]" 
+            : "§dMushroom Spore";
+        List<String> lore = new ArrayList<>();
+        if (strainName != null && breederName != null) {
+            lore.add("§8Grown by §7" + breederName);
+        }
+        
+        meta.setDisplayName(displayName);
+        if (!lore.isEmpty()) {
+            meta.setLore(lore);
+        }
         meta
             .getPersistentDataContainer()
             .set(MUSHROOM_SEED, PersistentDataType.BOOLEAN, true);
+        if (strainId != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_ID, PersistentDataType.STRING, strainId);
+        }
+        if (strainName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(STRAIN_NAME, PersistentDataType.STRING, strainName);
+        }
+        if (breederUuid != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER, PersistentDataType.STRING, breederUuid);
+        }
+        if (breederName != null) {
+            meta
+                .getPersistentDataContainer()
+                .set(ORIGINAL_BREEDER_NAME, PersistentDataType.STRING, breederName);
+        }
         item.setItemMeta(meta);
         return item;
     }

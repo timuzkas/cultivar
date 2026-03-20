@@ -23,5 +23,7 @@ public class TeaBrewManager {
         public UUID startedBy;
         public SteepQuality quality;
         public String blendIngredient;
+        public String strainId;
+        public String strainName;
     }
 }

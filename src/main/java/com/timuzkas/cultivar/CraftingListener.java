@@ -1,5 +1,6 @@
 package com.timuzkas.cultivar;
 
+import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
@@ -69,6 +70,17 @@ public class CraftingListener implements Listener {
             String strainId = ItemFactory.getStrainId(cannabisTrim);
             String strainName = ItemFactory.getStrainName(cannabisTrim);
             result = ItemFactory.createSpicedTeaLeaf(strainId, strainName);
+        } else if (cannabisTrim != null) {
+            boolean hasDirt = false;
+            for (ItemStack item : matrix) {
+                if (item != null && item.getType() == Material.DIRT) {
+                    hasDirt = true;
+                    break;
+                }
+            }
+            if (hasDirt) {
+                result = ItemFactory.createCompost();
+            }
         } else {
             for (ItemStack item : matrix) {
                 if (item == null || item.getItemMeta() == null) continue;

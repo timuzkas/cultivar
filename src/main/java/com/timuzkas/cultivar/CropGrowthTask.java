@@ -195,6 +195,19 @@ public class CropGrowthTask extends BukkitRunnable {
             }
         }
 
+        // Light stress for mushrooms (inverted - they prefer darkness)
+        if (crop.type == CropType.MUSHROOM) {
+            int light = crop.location.getBlock().getLightLevel();
+            int lightThreshold = 7;
+            if (crop.strainId != null) {
+                StrainProfile strain = StrainProfile.generate(crop.strainId, CropType.MUSHROOM);
+                lightThreshold += strain.lightTolerance;
+            }
+            if (light > lightThreshold) {
+                stress++;
+            }
+        }
+
         // Overcrowding for cannabis
         if (crop.type == CropType.CANNABIS) {
             int radius = plugin.getConfig().getInt("cultivar.cannabis.overcrowding-radius", 1);

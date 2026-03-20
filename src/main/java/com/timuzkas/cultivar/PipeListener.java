@@ -148,6 +148,8 @@ public class PipeListener implements Listener {
         boolean isSpliff = false;
         boolean isHerbalFill = false;
         boolean isFermented = false;
+        String tobaccoStrainId = null;
+        String tobaccoStrainName = null;
 
         if (ItemFactory.isCannabisBud(off)) {
             material = CropType.CANNABIS;
@@ -160,12 +162,18 @@ public class PipeListener implements Listener {
         } else if (ItemFactory.isDryTobaccoLeaf(off)) {
             material = CropType.TOBACCO;
             cureType = FurnaceListener.getCureType(off);
+            tobaccoStrainId = ItemFactory.getStrainId(off);
+            tobaccoStrainName = ItemFactory.getStrainName(off);
         } else if (ItemFactory.isAirCuredLeaf(off)) {
             material = CropType.TOBACCO;
             cureType = "air";
+            tobaccoStrainId = ItemFactory.getStrainId(off);
+            tobaccoStrainName = ItemFactory.getStrainName(off);
         } else if (ItemFactory.isAgedTobacco(off)) {
             material = CropType.TOBACCO;
             cureType = "aged";
+            tobaccoStrainId = ItemFactory.getStrainId(off);
+            tobaccoStrainName = ItemFactory.getStrainName(off);
         } else if (ItemFactory.isFermented(off)) {
             material = CropType.CANNABIS;
         } else if (ItemFactory.isSpliff(off)) {
@@ -293,6 +301,25 @@ public class PipeListener implements Listener {
                     "]";
                 meta.setDisplayName(displayName);
                 filled.setItemMeta(meta);
+            }
+            
+            if (tobaccoStrainId != null) {
+                ItemMeta strainMeta = filled.getItemMeta();
+                if (strainMeta != null) {
+                    strainMeta.getPersistentDataContainer().set(
+                        new org.bukkit.NamespacedKey("cultivar", "strain_id"),
+                        org.bukkit.persistence.PersistentDataType.STRING,
+                        tobaccoStrainId
+                    );
+                    if (tobaccoStrainName != null) {
+                        strainMeta.getPersistentDataContainer().set(
+                            new org.bukkit.NamespacedKey("cultivar", "strain_name"),
+                            org.bukkit.persistence.PersistentDataType.STRING,
+                            tobaccoStrainName
+                        );
+                    }
+                    filled.setItemMeta(strainMeta);
+                }
             }
         }
 
@@ -506,6 +533,34 @@ public class PipeListener implements Listener {
                         new PotionEffect(PotionEffectType.SATURATION, 40, 0)
                     );
                 }
+                
+                String tobaccoStrainId = getTobaccoStrainId(lit);
+                if (tobaccoStrainId != null) {
+                    StrainProfile strain = StrainProfile.generate(tobaccoStrainId, CropType.TOBACCO);
+                    float aromaBonus = strain.aromaProfile != null ? 1.0f + strain.curabilityBonus : 1.0f;
+                    
+                    if ("sweet".equals(strain.aromaProfile)) {
+                        player.addPotionEffect(
+                            new PotionEffect(PotionEffectType.REGENERATION, (int)(40 * aromaBonus), 0)
+                        );
+                    } else if ("smoky".equals(strain.aromaProfile)) {
+                        player.addPotionEffect(
+                            new PotionEffect(PotionEffectType.FIRE_RESISTANCE, (int)(60 * aromaBonus), 0)
+                        );
+                    } else if ("earthy".equals(strain.aromaProfile)) {
+                        player.addPotionEffect(
+                            new PotionEffect(PotionEffectType.SATURATION, (int)(60 * aromaBonus), 0)
+                        );
+                    } else if ("mild".equals(strain.aromaProfile)) {
+                        player.addPotionEffect(
+                            new PotionEffect(PotionEffectType.SPEED, (int)(30 * aromaBonus), 0)
+                        );
+                    } else if ("robust".equals(strain.aromaProfile)) {
+                        player.addPotionEffect(
+                            new PotionEffect(PotionEffectType.INCREASE_DAMAGE, (int)(40 * aromaBonus), 0)
+                        );
+                    }
+                }
             }
         }
 
@@ -687,6 +742,14 @@ public class PipeListener implements Listener {
         return lit.getItemMeta().getPersistentDataContainer().has(
             new org.bukkit.NamespacedKey("cultivar", "fermented"),
             org.bukkit.persistence.PersistentDataType.BOOLEAN
+        );
+    }
+
+    private String getTobaccoStrainId(ItemStack lit) {
+        if (lit == null || lit.getItemMeta() == null) return null;
+        return lit.getItemMeta().getPersistentDataContainer().get(
+            new org.bukkit.NamespacedKey("cultivar", "strain_id"),
+            org.bukkit.persistence.PersistentDataType.STRING
         );
     }
 
