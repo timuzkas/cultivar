@@ -84,55 +84,122 @@ Three pipe tiers with different durability and smoking effects.
 
 Used for drying tobacco leaves.
 
-Crafted from:
-- Top: 3 Oak Planks
-- Middle: 1 Stick
-- Bottom: 1 Stick
+### Placement
+
+The drying rack must be placed on a wall (not floor or ceiling). It attaches to solid blocks on its sides.
+
+### Recipe
+
+```
+[Oak Planks] [Oak Planks] [Oak Planks]
+[Stick    ] [             ] [         ]
+[Stick    ] [             ] [         ]
+```
+
+Top row: 3 Oak Planks
+Middle: 1 Stick
+Bottom: 1 Stick
 
 ### Usage
 
-1. Place the drying rack on a wall
-2. Right-click with tobacco leaves to hang them
-3. Wait for drying time (configurable)
-4. Right-click to collect dried tobacco leaves
+1. Place the drying rack on a wall (attach to the side of a solid block)
+2. Right-click the rack with fresh tobacco leaves
+3. The rack shows a visual indicator of drying progress
+4. Wait for drying time (configurable in config.yml)
+5. Right-click the rack to collect dried tobacco leaves
 
-Dried tobacco leaves have extended shelf life and are required for curing.
+Dried leaves are required for [tobacco curing](/mechanics#tobacco-curing). A single rack holds one batch at a time.
+
+### Tips
+
+- Place multiple racks for larger operations
+- Drying time can be configured per curing method
+- Hanging leaves from the rack for too long (beyond ready) does not ruin them
 
 ---
 
 ## Tea Brewing
 
+Tea brewing uses a two-part setup: a teapot and a cauldron.
+
 ### Teapot
 
 Crafted from:
-- Top row: 3 Copper Ingots
-- Middle: 2 Copper Ingots + 1 Iron Ingot (spout)
-- Bottom: 1 Copper Ingot
+```
+[Copper Ingot] [Copper Ingot] [Copper Ingot]
+[Copper Ingot] [Iron Ingot  ] [Copper Ingot]
+[Copper Ingot] [Copper Ingot] [Copper Ingot]
+```
+
+The iron ingot forms the spout. Place the teapot on a cauldron to begin brewing.
 
 ### Tea Types
 
-**Green Tea**
-- 1 Green Tea Leaf in teapot
-- Brew time: 30 seconds
-- Effects: Regeneration I (30s)
+| Tea | Leaf Required | Brew Time | Effects |
+|-----|---------------|-----------|---------|
+| Green Tea | 1 Green Tea Leaf | 30s | Regeneration I (30s) |
+| Black Tea | 1 Black Tea Leaf | 45s | Speed I (60s), Haste I (30s) |
+| Herbal Tea | 1 Herbal Tea Leaf | 30s | Night Vision (120s), Slow Falling (60s) |
 
-**Black Tea**
-- 1 Black Tea Leaf in teapot
-- Brew time: 45 seconds
-- Effects: Speed I (60s), Haste I (30s)
+### Setup
 
-**Herbal Tea**
-- 1 Herbal Tea Leaf in teapot
-- Brew time: 30 seconds
-- Effects: Night Vision (120s), Slow Falling (60s)
+1. Place a cauldron (on a furnace for water heating)
+2. Place the teapot directly on top of the cauldron
+3. Fill the cauldron with water (use water buckets)
 
 ### Brewing Process
 
-1. Place teapot on a cauldron
-2. Add tea leaves to teapot
-3. Wait for brew time
-4. Right-click cauldron with glass bottle to bottle the tea
-5. Right-click with tea mug to consume
+1. Add tea leaves to the teapot (right-click with leaves)
+2. The cauldron heats the water and brewing begins automatically
+3. Watch for the brew timer — bottling at the exact moment gives a **Perfect Steep** bonus
+4. Right-click the cauldron with a glass bottle to bottle the tea
+5. Right-click with the tea mug to consume
+
+### Perfect Steep
+
+Bottling tea exactly when brewing completes gives:
+- +50% effect duration
+- +2 reputation points
+
+### Notes
+
+- The cauldron must have water and a heat source below (furnace, lava, soul fire, etc.)
+- Multiple teapots on one cauldron each drain 1 water level
+- Bottling too early produces weak tea; too late produces bitter tea with reduced effects
+- Each teapot brews independently
+
+---
+
+## Fermentation Chamber
+
+Cannabis buds can be fermented for enhanced potency.
+
+### Setup
+
+1. Place a composter at ground level
+2. Fill it with fresh cannabis buds (right-click with buds)
+3. Move the composter to a dark location (see below)
+4. Wait for fermentation
+
+### Requirements
+
+- **Darkness**: The composter must be at Y < 40, or in a location with no sky access (underground room, enclosed structure)
+- **Time**: 40 minutes of real time
+
+### Fermented vs Regular
+
+| Property | Regular | Fermented |
+|----------|---------|-----------|
+| Potency | Tier I-IV | Tier II-V (+1) |
+| Yield | 100% | 80% (-20%) |
+| Effect Duration | Base | +50% |
+
+### Tips
+
+- Enclosed underground rooms work well
+- Place multiple composter-fermenters for larger batches
+- Fermentation is per-batch, not per-item — ferment entire harvests at once
+- Breaking the composter cancels fermentation and loses the batch
 
 ---
 
